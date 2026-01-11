@@ -1,0 +1,55 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+  config:
+    import: "optional:configserver:http://config-server:8888" # <--- ADDED THIS
+
+eureka:
+  instance:
+    hostname: eureka-server # <--- Changed localhost to service name for Docker
+  client:
+    # Disable self-registration for standalone Eureka server
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  server:
+    # Enable self-preservation mode (prevents registry cleanup)
+    enable-self-preservation: true
+    # Eviction task timer interval (in milliseconds)
+    eviction-interval-timer-in-ms: 60000
+    # Renewal threshold percentage
+    renewal-percent-threshold: 0.85
+    # Response cache update interval (in milliseconds)
+    response-cache-update-interval-ms: 30000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: MicroPay Eureka Discovery Server
+    description: Service discovery server for MicroPay microservices
+    version: 1.0.0
+
+logging:
+  level:
+    root: INFO
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+    com.micropay: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

@@ -1,0 +1,63 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: native
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config-repo,file:./config-repo,file:${CONFIG_REPO_PATH:./config-repo}
+        health:
+          repositories:
+            user-service:
+              label: master
+            account-service:
+              label: master
+            payment-service:
+              label: master
+            transaction-service:
+              label: master
+            balance-service:
+              label: master
+            notification-service:
+              label: master
+            fraud-detection-service:
+              label: master
+            audit-service:
+              label: master
+            reporting-service:
+              label: master
+            api-gateway:
+              label: master
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: MicroPay Config Server
+    description: Centralized configuration server for MicroPay microservices
+    version: 1.0.0
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.config: DEBUG
+    com.micropay: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+

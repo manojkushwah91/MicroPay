@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: micropay-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: micropay-frontend
+  template:
+    metadata:
+      labels:
+        app: micropay-frontend
+    spec:
+      containers:
+        - name: micropay-frontend
+          image: nexus.example.com/micropay/frontend:latest
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: frontend-config
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: micropay-frontend
+spec:
+  selector:
+    app: micropay-frontend
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP

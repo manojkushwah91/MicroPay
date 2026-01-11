@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          # IMPORTANT: Changed to use the image you built locally
+          image: docker-auth-service:latest 
+          imagePullPolicy: IfNotPresent # Uses local image if available
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - configMapRef:
+                name: auth-service-config
+          env:
+            # --- CRITICAL FIX: Connect to Config Server ---
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-server:8888"
+            
+            # --- CRITICAL FIX: Explicit Database Connection ---
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres:5432/micropay_auth_db"
+            
+            # Secrets mapping
+            - name: DB_USERNAME # Matches ${DB_USERNAME} in your JAR
+              valueFrom:
+                secretKeyRef:
+                  name: micropay-secrets
+                  key: POSTGRES_USERNAME
+            - name: DB_PASSWORD # Matches ${DB_PASSWORD} in your JAR
+              valueFrom:
+                secretKeyRef:
+                  name: micropay-secrets
+                  key: POSTGRES_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: micropay-secrets
+                  key: JWT_SECRET
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+  type: ClusterIP

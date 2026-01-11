@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: micropay-secrets
+          env:
+            - name: POSTGRES_DB
+              value: postgres # Default DB to connect to initially
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: postgres-storage
+            # --- MOUNT THE INIT SCRIPT HERE ---
+            - mountPath: /docker-entrypoint-initdb.d/init.sql
+              name: postgres-init
+              subPath: init.sql
+      volumes:
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: postgres-pvc
+        # --- DEFINE THE VOLUME FROM CONFIGMAP ---
+        - name: postgres-init
+          configMap:
+            name: postgres-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
