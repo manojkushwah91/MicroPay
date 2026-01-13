@@ -1,80 +1,127 @@
-# MicroPay - Production-Ready Digital Payment Platform
+# 💳 MicroPay – Digital Wallet & Payment Backend System
 
-## Architecture Overview
+MicroPay is a **backend-focused digital wallet and payment system** built using **Java and Spring Boot**, following a **microservices and event-driven architecture**.  
+The system is designed to handle **users, wallets, transactions, and payments** with a strong emphasis on **data consistency, security, and scalability**.
 
-MicroPay is a real-time, event-driven digital payment platform built with microservices architecture. The system is designed for high availability, horizontal scalability, and fault tolerance.
+This project was built to simulate **real-world backend challenges** commonly found in fintech systems.
 
-## Technology Stack
+---
+
+## 🧩 System Overview
+
+MicroPay consists of multiple backend services, each responsible for a specific domain:
+- User Management
+- Wallet Management
+- Transaction Processing
+- Payment Handling
+
+Services communicate using **REST APIs** and **Apache Kafka** for asynchronous, event-driven workflows.
+
+---
+
+## 🛠️ Technology Stack
 
 ### Backend
-- **Runtime**: Java 17
-- **Framework**: Spring Boot 3.x
-- **Microservices**: Spring Cloud
-- **API Gateway**: Spring Cloud Gateway
-- **Service Discovery**: Eureka
-- **Config Server**: Spring Cloud Config Server
+- Java 17
+- Spring Boot
+- Spring Data JPA
+- Spring Security
+- Spring Cloud (Eureka, API Gateway)
 
-### Frontend
-- **Framework**: React 18+
-- **Build Tool**: Vite
-- **Language**: TypeScript
+### Messaging
+- Apache Kafka (event-driven communication)
 
-### Infrastructure
-- **Messaging**: Apache Kafka (Event-driven architecture)
-- **Database**: PostgreSQL (Database-per-service pattern)
-- **Cache**: Redis
-- **Containerization**: Docker
-- **Orchestration**: Kubernetes
+### Database
+- PostgreSQL (separate schema per service)
 
 ### Security
-- **Authentication**: Spring Security + JWT
-- **Authorization**: OAuth2 ready
-- **Inter-service**: mTLS (mutual TLS)
+- JWT-based authentication and authorization
 
-### DevOps & Platform
-- **CI/CD**: Jenkins
-- **Code Quality**: SonarQube
-- **Artifact Repository**: Nexus
-- **Monitoring**: Prometheus + Grafana
-- **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
+### Tools
+- Docker
+- Maven
+- Git
 
-## Architecture Principles
+---
 
-1. **Event-Driven**: All state-changing operations flow through Kafka
-2. **Idempotency**: All payment operations are idempotent
-3. **Eventual Consistency**: Saga pattern for distributed transactions
-4. **Independent Deployment**: Services are independently deployable
-5. **API Gateway**: Single entry point for external access
-6. **Secure Communication**: mTLS for inter-service communication
-7. **Horizontal Scalability**: Services scale independently
-8. **Fault Tolerance**: Circuit breakers, retries, and graceful degradation
+## ⚙️ Core Features
 
-## Documentation Structure
+### 👤 User & Wallet Management
+- User registration and authentication
+- Automatic wallet creation on user onboarding
+- Secure access using JWT tokens
 
-```
-docs/
-├── architecture/
-│   ├── 01-microservices-overview.md
-│   ├── 02-kafka-topics-and-events.md
-│   ├── 03-payment-event-flow.md
-│   ├── 04-database-schemas.md
-│   ├── 05-api-gateway-routing.md
-│   ├── 06-cicd-pipeline.md
-│   ├── 07-kubernetes-deployment.md
-│   └── 08-observability-monitoring.md
-└── diagrams/
-    └── (architecture diagrams in text format)
-```
+### 💰 Transaction & Payment Processing
+- Wallet-to-wallet fund transfers
+- Balance updates handled asynchronously
+- Transaction history tracking
 
-## Quick Start
+### 📢 Event-Driven Architecture
+- Used **Kafka** to publish transaction and wallet events
+- Enabled loose coupling between services
+- Improved system responsiveness and scalability
 
-This repository contains **design documentation only**. For implementation, refer to the architecture documents in the `docs/` directory.
+### 🗄️ Data Consistency
+- Database transactions handled using Spring’s transactional support
+- Designed workflows to maintain consistency during partial failures
+- Ensured reliable balance updates in transaction flows
 
-## Key Design Decisions
+### 🐳 Containerization
+- Backend services containerized using **Docker**
+- Enabled consistent local development and testing environments
 
-1. **Kafka-First**: All state changes are events, ensuring auditability and replayability
-2. **Saga Pattern**: Distributed transactions handled via choreography-based sagas
-3. **CQRS**: Read and write models separated where appropriate
-4. **Database-per-Service**: Each service owns its data, no shared databases
-5. **API Gateway Pattern**: Centralized routing, authentication, and rate limiting
+---
 
+## 🔄 High-Level Transaction Flow
+
+1. User initiates a payment request via REST API  
+2. Payment service validates the request and publishes a transaction event  
+3. Wallet service consumes the event and updates wallet balances  
+4. Transaction status is updated and persisted in the database  
+5. Final response is returned to the client  
+
+---
+
+## 📌 Design Focus
+
+- Backend-first microservices architecture
+- Clear separation of responsibilities per service
+- REST APIs for synchronous communication
+- Kafka for asynchronous transaction processing
+- Secure APIs using JWT
+- Production-like local setup using Docker
+
+---
+
+## 🚀 Running the Project Locally
+
+> Prerequisites:
+- Java 17+
+- Docker
+- PostgreSQL
+- Kafka (local or Docker-based)
+
+Basic steps:
+1. Clone the repository
+2. Configure database and Kafka properties
+3. Build the services using Maven
+4. Run services locally or using Docker
+
+---
+
+## 🎯 Learning Outcomes
+
+- Built a **microservices-based backend system**
+- Implemented **event-driven communication** using Kafka
+- Designed secure REST APIs with **Spring Security & JWT**
+- Worked with **PostgreSQL and transactional data**
+- Gained hands-on experience with **Dockerized backend services**
+
+---
+
+## 📬 Contact
+
+**Manoj Kushwah**  
+📧 manojkushwah91115@gmail.com  
+🔗 GitHub: https://github.com/manojkushwah91  
+🔗 LinkedIn: https://linkedin.com/in/manojkushwah871
