@@ -42,8 +42,8 @@ public class SecurityConfig {
             // Authorization rules
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/api/auth/register",
-                    "/api/auth/login",
+                    "/auth/register",
+                    "/auth/login",
                     "/actuator/**"
                 ).permitAll()
                 .anyRequest().authenticated()

@@ -23,25 +23,27 @@ spec:
             - configMapRef:
                 name: auth-service-config
           env:
-            # --- CRITICAL FIX: Connect to Config Server ---
+            # Config Server connection
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://config-server:8888"
             
-            # --- CRITICAL FIX: Explicit Database Connection ---
-            - name: DB_URL
-              value: "jdbc:postgresql://postgres:5432/micropay_auth_db"
+            # Database URL (matches ${AUTH_DB_URL} in config-repo/auth-service.yml)
+            - name: AUTH_DB_URL
+              value: "jdbc:postgresql://postgres:5432/micropay_db"
             
-            # Secrets mapping
-            - name: DB_USERNAME # Matches ${DB_USERNAME} in your JAR
+            # Database credentials (matches ${POSTGRES_USER} and ${POSTGRES_PASSWORD} in config-repo)
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: micropay-secrets
-                  key: POSTGRES_USERNAME
-            - name: DB_PASSWORD # Matches ${DB_PASSWORD} in your JAR
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: micropay-secrets
                   key: POSTGRES_PASSWORD
+            
+            # JWT secret for authentication
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

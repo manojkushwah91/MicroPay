@@ -1,6 +1,6 @@
 package com.micropay.wallet.config;
 
-import com.micropay.wallet.dto.UserCreatedEvent;
+import com.micropay.events.dto.UserCreatedEvent;           // ← Updated import from shared library
 import com.micropay.wallet.dto.WalletBalanceUpdatedEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -28,9 +28,9 @@ public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id}")
     private String consumerGroupId;
 
-    /* =====================================================
-       PRODUCER CONFIG (wallet → other services)
-       ===================================================== */
+    // ──────────────────────────────────────────────────────
+    //  PRODUCER CONFIG (wallet → other services)
+    // ──────────────────────────────────────────────────────
     @Bean
     public ProducerFactory<String, WalletBalanceUpdatedEvent> producerFactory() {
         Map<String, Object> props = new HashMap<>();
@@ -39,7 +39,7 @@ public class KafkaConfig {
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
 
-        // Reliability
+        // Reliability settings (good practice)
         props.put(ProducerConfig.ACKS_CONFIG, "all");
         props.put(ProducerConfig.RETRIES_CONFIG, 3);
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
@@ -52,9 +52,9 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    /* =====================================================
-       CONSUMER CONFIG (auth → wallet)
-       ===================================================== */
+    // ──────────────────────────────────────────────────────
+    //  CONSUMER CONFIG (auth → wallet) - UserCreatedEvent
+    // ──────────────────────────────────────────────────────
     @Bean
     public ConsumerFactory<String, UserCreatedEvent> consumerFactory() {
 
@@ -62,24 +62,21 @@ public class KafkaConfig {
 
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroupId);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
-        // 🔐 Security: only allow these packages (never use "*" in prod)
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.micropay.wallet.dto");
+        // ────────────────────── Very important security fix ──────────────────────
+        // Only trust the shared package - never use "*" in production!
+        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.micropay.events.dto");
 
-        /* -----------------------------------------------------
-           JsonDeserializer: FORCE target type, IGNORE headers
-           ----------------------------------------------------- */
         JsonDeserializer<UserCreatedEvent> jsonDeserializer =
-                new JsonDeserializer<>(UserCreatedEvent.class);
+                new JsonDeserializer<>(UserCreatedEvent.class, false); // false = don't use type headers
 
-        jsonDeserializer.setUseTypeHeaders(false);
-        jsonDeserializer.addTrustedPackages("com.micropay.wallet.dto");
+        // This line is critical after moving to shared library
+        jsonDeserializer.addTrustedPackages("com.micropay.events.dto");
 
-        /* -----------------------------------------------------
-           ErrorHandlingDeserializer: prevents crash loops
-           ----------------------------------------------------- */
+        jsonDeserializer.setUseTypeHeaders(false); // we force the type explicitly
+
         ErrorHandlingDeserializer<UserCreatedEvent> valueDeserializer =
                 new ErrorHandlingDeserializer<>(jsonDeserializer);
 
@@ -102,10 +99,12 @@ public class KafkaConfig {
 
         factory.setConsumerFactory(consumerFactory());
 
-        // Manual acknowledgment (you already use this correctly)
+        // Manual ack - very good choice for controlled processing
         factory.getContainerProperties()
                .setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         return factory;
     }
 }
+
+

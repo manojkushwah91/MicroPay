@@ -1,6 +1,6 @@
 package com.micropay.auth.config;
 
-import com.micropay.auth.dto.UserCreatedEvent;
+import com.micropay.events.dto.UserCreatedEvent;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;

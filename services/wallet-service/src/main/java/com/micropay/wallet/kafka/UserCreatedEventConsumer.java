@@ -1,6 +1,6 @@
 package com.micropay.wallet.kafka;
 
-import com.micropay.wallet.dto.UserCreatedEvent;
+import com.micropay.events.dto.UserCreatedEvent;
 import com.micropay.wallet.service.WalletService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ public class UserCreatedEventConsumer {
      * Consume user.created events from Kafka
      * Creates a wallet for the new user
      */
-    @KafkaListener(topics = "user.created", groupId = "${spring.kafka.consumer.group-id}")
+    @KafkaListener(topics = "user.created", groupId = "${spring.kafka.consumer.group-id}",containerFactory = "kafkaListenerContainerFactory")
     public void consumeUserCreatedEvent(
             @Payload UserCreatedEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,

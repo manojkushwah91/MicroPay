@@ -30,8 +30,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // ✅ FRONTEND ORIGIN
-        config.setAllowedOrigins(List.of("http://localhost:3000"));
+        // ✅ FRONTEND ORIGINS (Vite dev server and React)
+        config.setAllowedOrigins(List.of(
+            "http://localhost:3000",
+            "http://localhost:5173"
+        ));
 
         config.setAllowedMethods(
             List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")

@@ -59,3 +59,6 @@ COMMENT ON COLUMN transaction_entries.currency IS 'Currency code (ISO 4217)';
 
 
 
+
+
+

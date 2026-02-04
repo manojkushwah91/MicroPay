@@ -1,6 +1,9 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import type { ApiError } from '../types';
 
+// API Base URL - supports both Docker and local development
+// In Docker, frontend is served by nginx and calls API Gateway via host network
+// VITE_API_BASE_URL is set at build time via Docker build arg
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 class ApiService {
@@ -50,6 +53,8 @@ class ApiService {
 
 export const apiService = new ApiService();
 export const api = apiService.instance;
+
+
 
 
 

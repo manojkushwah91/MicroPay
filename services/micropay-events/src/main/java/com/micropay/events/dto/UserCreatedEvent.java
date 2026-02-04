@@ -1,11 +1,8 @@
-package com.micropay.wallet.dto;
+package com.micropay.events.dto;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Kafka event DTO for user.created event consumed from auth-service
- */
 public class UserCreatedEvent {
 
     private String eventId;
@@ -19,6 +16,17 @@ public class UserCreatedEvent {
 
     // Constructors
     public UserCreatedEvent() {
+    }
+
+    public UserCreatedEvent(UUID userId, String email, String firstName, String lastName, LocalDateTime createdAt) {
+        this.eventId = UUID.randomUUID().toString();
+        this.eventType = "user.created";
+        this.timestamp = LocalDateTime.now();
+        this.userId = userId;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.createdAt = createdAt;
     }
 
     // Getters and Setters
@@ -86,7 +94,4 @@ public class UserCreatedEvent {
         this.createdAt = createdAt;
     }
 }
-
-
-
 

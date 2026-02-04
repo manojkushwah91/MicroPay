@@ -3,7 +3,7 @@ package com.micropay.auth.service;
 import com.micropay.auth.dto.AuthResponse;
 import com.micropay.auth.dto.LoginRequest;
 import com.micropay.auth.dto.RegisterRequest;
-import com.micropay.auth.dto.UserCreatedEvent;
+import com.micropay.events.dto.UserCreatedEvent;
 import com.micropay.auth.model.Role;
 import com.micropay.auth.model.User;
 import com.micropay.auth.model.UserStatus;

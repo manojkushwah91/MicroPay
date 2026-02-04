@@ -21,12 +21,21 @@ spec:
             - configMapRef:
                 name: wallet-service-config
           env:
-            - name: SPRING_DATASOURCE_USERNAME
+            # Config Server connection
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-server:8888"
+            
+            # Database URL (matches ${WALLET_DB_URL} in config-repo/wallet-service.yml)
+            - name: WALLET_DB_URL
+              value: "jdbc:postgresql://postgres:5432/micropay_db"
+            
+            # Database credentials (matches ${POSTGRES_USER} and ${POSTGRES_PASSWORD} in config-repo)
+            - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
                   name: micropay-secrets
-                  key: POSTGRES_USERNAME
-            - name: SPRING_DATASOURCE_PASSWORD
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: micropay-secrets
