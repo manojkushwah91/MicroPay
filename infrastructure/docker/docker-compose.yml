@@ -200,6 +200,8 @@ services:
     hostname: auth-service
     ports:
       - "8081:8081"
+    volumes:
+      - ./.env:/app/.env
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - SPRING_DATASOURCE_URL=${AUTH_DB_URL:-jdbc:postgresql://postgres:5432/micropay_auth_db}
@@ -240,6 +242,8 @@ services:
     hostname: wallet-service
     ports:
       - "8083:8083"
+    volumes:
+      - ./.env:/app/.env
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - SPRING_DATASOURCE_URL=${WALLET_DB_URL:-jdbc:postgresql://postgres:5432/micropay_wallet_db}
@@ -278,6 +282,8 @@ services:
     hostname: payment-service
     ports:
       - "8084:8084"
+    volumes:
+      - ./.env:/app/.env
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - SPRING_DATASOURCE_URL=${PAYMENT_DB_URL:-jdbc:postgresql://postgres:5432/micropay_payment_db}
@@ -316,6 +322,8 @@ services:
     hostname: transaction-service
     ports:
       - "8085:8085"
+    volumes:
+      - ./.env:/app/.env
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - SPRING_DATASOURCE_URL=${TRANSACTION_DB_URL:-jdbc:postgresql://postgres:5432/micropay_transaction_db}
@@ -354,6 +362,8 @@ services:
     hostname: notification-service
     ports:
       - "8086:8086"
+    volumes:
+      - ./.env:/app/.env
     environment:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - SPRING_DATASOURCE_URL=${NOTIFICATION_DB_URL:-jdbc:postgresql://postgres:5432/micropay_notification_db}
