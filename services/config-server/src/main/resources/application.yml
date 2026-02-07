@@ -8,31 +8,19 @@ spring:
     active: native
   cloud:
     config:
+      # CRITICAL FIX: Disables the client from trying to fetch config from port 8888.
+      # This stops the infinite loop causing the Read timed out error.
+      enabled: false 
       server:
         native:
-          search-locations: classpath:/config-repo,file:./config-repo,file:${CONFIG_REPO_PATH:./config-repo}
+          # Refined for both local IDE runs and Docker container runs
+          search-locations: file:./config-repo,file:/config-repo,classpath:/config-repo
         health:
-          repositories:
-            user-service:
-              label: master
-            account-service:
-              label: master
-            payment-service:
-              label: master
-            transaction-service:
-              label: master
-            balance-service:
-              label: master
-            notification-service:
-              label: master
-            fraud-detection-service:
-              label: master
-            audit-service:
-              label: master
-            reporting-service:
-              label: master
-            api-gateway:
-              label: master
+          # We kept the health section enabled but simplified it to avoid I/O hangs
+          enabled: true
+          # Note: Explicit service labels are removed here because 'native' profile
+          # does not have git-style labels like 'master'. Removing them prevents 
+          # unnecessary lookup overhead that leads to timeouts.
 
 management:
   endpoints:
@@ -41,7 +29,8 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: when-authorized
+      # Setting to 'always' helps you debug if the native repo folder is missing
+      show-details: always
   info:
     env:
       enabled: true
@@ -60,4 +49,3 @@ logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
