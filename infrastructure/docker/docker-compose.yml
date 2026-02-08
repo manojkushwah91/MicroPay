@@ -128,10 +128,10 @@ services:
       - micropay-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8888/actuator/health"]
-      interval: 30s
+      interval: 10s
       timeout: 10s
-      retries: 5
-      start_period: 40s
+      retries: 10
+      start_period: 60s
     restart: unless-stopped
 
   eureka-server:
@@ -146,6 +146,10 @@ services:
       - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
       - EUREKA_INSTANCE_HOSTNAME=eureka-server
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       config-server:
         condition: service_healthy
@@ -177,6 +181,10 @@ services:
       - EUREKA_INSTANCE_HOSTNAME=api-gateway
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - SERVER_PORT=8080
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -215,6 +223,10 @@ services:
       - SERVER_PORT=8081
       - JWT_SECRET=${JWT_SECRET:-micropay_jwt_secret_key_123456}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-86400000}
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       postgres:
         condition: service_healthy
@@ -255,6 +267,10 @@ services:
       - EUREKA_INSTANCE_HOSTNAME=wallet-service
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - SERVER_PORT=8083
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       postgres:
         condition: service_healthy
@@ -295,6 +311,10 @@ services:
       - EUREKA_INSTANCE_HOSTNAME=payment-service
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - SERVER_PORT=8084
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       postgres:
         condition: service_healthy
@@ -335,6 +355,10 @@ services:
       - EUREKA_INSTANCE_HOSTNAME=transaction-service
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - SERVER_PORT=8085
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       postgres:
         condition: service_healthy
@@ -375,6 +399,10 @@ services:
       - EUREKA_INSTANCE_HOSTNAME=notification-service
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
       - SERVER_PORT=8086
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
+      - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
+      - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
+      - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
     depends_on:
       postgres:
         condition: service_healthy
