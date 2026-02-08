@@ -8,32 +8,32 @@ spring:
     import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config-server:8888}
   cloud:
     gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
       routes:
-        # Auth Service Routes
         - id: auth-service
           uri: lb://auth-service
           predicates:
             - Path=/api/auth/**
           filters:
-            - StripPrefix=1  # Remove /api prefix, forward /auth/** to service
+            - StripPrefix=1
         
-        # Wallet Service Routes
         - id: wallet-service
           uri: lb://wallet-service
           predicates:
             - Path=/api/wallet/**
           filters:
-            - StripPrefix=0  # Keep /api/wallet prefix
+            - StripPrefix=0
         
-        # Payment Service Routes
         - id: payment-service
           uri: lb://payment-service
           predicates:
             - Path=/api/payment/**
           filters:
-            - StripPrefix=1  # Remove /api prefix, forward /payment/** to service
+            - StripPrefix=1
         
-        # Transaction Service Routes
         - id: transaction-service
           uri: lb://transaction-service
           predicates:
@@ -41,13 +41,13 @@ spring:
           filters:
             - StripPrefix=1
         
-        # Notification Service Routes
         - id: notification-service
           uri: lb://notification-service
           predicates:
             - Path=/api/notification/**
           filters:
             - StripPrefix=1
+
       globalcors:
         corsConfigurations:
           '[/**]':

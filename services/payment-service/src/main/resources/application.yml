@@ -17,6 +17,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -29,9 +30,11 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
+
   flyway:
     enabled: true
     locations: classpath:db/migration
+
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
     consumer:
@@ -79,5 +82,3 @@ logging:
     root: INFO
     com.micropay: DEBUG
     org.springframework.kafka: INFO
-
-
