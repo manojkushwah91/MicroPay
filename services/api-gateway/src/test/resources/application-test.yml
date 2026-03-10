@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    discovery:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+
+eureka:
+  client:
+    enabled: false
+
+
