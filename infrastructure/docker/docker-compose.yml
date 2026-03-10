@@ -107,6 +107,23 @@ services:
       "
     restart: "no"
 
+  redis:
+    image: redis:7-alpine
+    container_name: micropay-redis
+    hostname: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - micropay-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   # ============================================
   # Spring Cloud Services
   # ============================================
@@ -180,6 +197,11 @@ services:
       - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://eureka-server:8761/eureka
       - EUREKA_INSTANCE_HOSTNAME=api-gateway
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
+
+      # Redis configuration for RequestRateLimiter
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+
       - SERVER_PORT=8080
       - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
       - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
@@ -189,6 +211,8 @@ services:
       eureka-server:
         condition: service_healthy
       config-server:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - micropay-network
@@ -472,3 +496,5 @@ volumes:
     name: micropay-zookeeper-logs
   kafka-data:
     name: micropay-kafka-data
+  redis-data:
+    name: micropay-redis-data

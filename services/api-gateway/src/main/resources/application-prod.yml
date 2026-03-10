@@ -10,8 +10,12 @@ spring:
     port: ${SPRING_REDIS_PORT:6379}
 
   cloud:
-    gateway:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
 
+    gateway:
       discovery:
         locator:
           enabled: true
@@ -57,17 +61,15 @@ spring:
         - name: RequestRateLimiter
           args:
             key-resolver: "#{@ipKeyResolver}"
-            redis-rate-limiter.replenishRate: 20
-            redis-rate-limiter.burstCapacity: 40
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
             redis-rate-limiter.requestedTokens: 1
 
       globalcors:
         corsConfigurations:
           '[/**]':
             allowedOrigins:
-              - ${FRONTEND_URL:http://localhost:3000}
-              - ${FRONTEND_URL_ALT:http://localhost:5173}
-              - http://localhost
+              - ${FRONTEND_URL:http://localhost}
             allowedMethods:
               - GET
               - POST
@@ -88,13 +90,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: never
 
 logging:
   level:
     root: INFO
-    com.micropay: DEBUG
-    org.springframework.cloud.gateway: DEBUG
+  pattern:
+    console: '{"ts":"%d{yyyy-MM-dd''T''HH:mm:ss.SSSXXX}","level":"%p","service":"${spring.application.name:-api-gateway}","logger":"%c{1}","thread":"%t","msg":"%m","trace":"%X{traceId}","span":"%X{spanId}"}%n'
