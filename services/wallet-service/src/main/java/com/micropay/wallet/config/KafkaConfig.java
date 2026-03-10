@@ -65,10 +65,6 @@ public class KafkaConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
-        // ────────────────────── Very important security fix ──────────────────────
-        // Only trust the shared package - never use "*" in production!
-        props.put(JsonDeserializer.TRUSTED_PACKAGES, "com.micropay.events.dto");
-
         JsonDeserializer<UserCreatedEvent> jsonDeserializer =
                 new JsonDeserializer<>(UserCreatedEvent.class, false); // false = don't use type headers
 
