@@ -138,9 +138,10 @@ services:
       - "8888:8888"
     environment:
       - SPRING_PROFILES_ACTIVE=native
-      - CONFIG_REPO_PATH=/app/config-repo
-    volumes:
-      - ../../services/config-server/config-repo:/app/config-repo
+      # Explicitly kill the client loop
+      - SPRING_CLOUD_CONFIG_ENABLED=false
+      # Force it to look inside the compiled jar for the configs
+      - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS=classpath:/config-repo
     networks:
       - micropay-network
     healthcheck:
@@ -199,8 +200,8 @@ services:
       - EUREKA_INSTANCE_PREFER_IP_ADDRESS=false
 
       # Redis configuration for RequestRateLimiter
-      - SPRING_REDIS_HOST=redis
-      - SPRING_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
 
       - SERVER_PORT=8080
       - SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS=6
@@ -251,6 +252,7 @@ services:
       - SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL=2000
       - SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER=2
       - SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL=10000
+      - SPRING_APPLICATION_NAME=auth-service
     depends_on:
       postgres:
         condition: service_healthy

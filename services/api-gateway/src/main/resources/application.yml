@@ -88,10 +88,10 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
-  endpoint:
-    health:
-      show-details: when-authorized
+        include: health, info, prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 logging:
   level:
