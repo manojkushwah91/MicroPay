@@ -13,8 +13,8 @@ RUN npm ci --only=production=false
 # Copy source code
 COPY . .
 
-# Build argument for API base URL (defaults to api-gateway for Docker)
-ARG VITE_API_BASE_URL=http://localhost:8080
+# Build argument for API base URL (defaults to `/api` behind reverse proxy)
+ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Build application

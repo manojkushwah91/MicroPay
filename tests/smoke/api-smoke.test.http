@@ -1,0 +1,74 @@
+### MicroPay API smoke tests (run with REST Client plugins or convert to Postman)
+
+@host = http://localhost
+
+### Register user
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "portfolio-user@example.com",
+  "password": "Password123!",
+  "firstName": "Portfolio",
+  "lastName": "User"
+}
+
+###
+### Login user
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "portfolio-user@example.com",
+  "password": "Password123!"
+}
+
+###
+### Template calls below: replace {{token}} and {{userId}} from login response
+
+### Get wallet
+GET {{host}}/api/wallet/{{userId}}
+Authorization: Bearer {{token}}
+
+### Credit wallet
+POST {{host}}/api/wallet/{{userId}}/credit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "amount": 500,
+  "transactionId": "00000000-0000-0000-0000-00000000cafe"
+}
+
+### Debit wallet
+POST {{host}}/api/wallet/{{userId}}/debit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "amount": 50,
+  "transactionId": "00000000-0000-0000-0000-00000000feed"
+}
+
+### Create payment
+POST {{host}}/api/payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "payerUserId": "{{userId}}",
+  "payeeUserId": "{{userId}}",
+  "amount": 25,
+  "currency": "INR",
+  "reference": "portfolio-smoke"
+}
+
+### List transactions
+GET {{host}}/api/transactions/{{userId}}
+Authorization: Bearer {{token}}
+
+### List notifications
+GET {{host}}/api/notifications/{{userId}}?page=0&size=10
+Authorization: Bearer {{token}}
+
+

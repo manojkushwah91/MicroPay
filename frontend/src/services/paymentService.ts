@@ -3,12 +3,12 @@ import type { Payment, PaymentRequest } from '../types';
 
 export const paymentService = {
   async initiatePayment(request: PaymentRequest): Promise<Payment> {
-    const response = await api.post<Payment>('/api/payment', request);
+    const response = await api.post<Payment>('/payment', request);
     return response.data;
   },
 
   async getPayment(paymentId: string): Promise<Payment> {
-    const response = await api.get<Payment>(`/api/payment/${paymentId}`);
+    const response = await api.get<Payment>(`/payment/${paymentId}`);
     return response.data;
   },
 };
