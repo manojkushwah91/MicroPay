@@ -14,22 +14,21 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: nexus.example.com/micropay/payment-service:latest
+          image: ${ECR_REGISTRY:-local}/micropay-payment-service:${IMAGE_TAG:-latest}
           ports:
-            - containerPort: 8083
+            - containerPort: 8084
           envFrom:
             - configMapRef:
                 name: payment-service-config
           env:
-            # Config Server connection
-            - name: SPRING_CONFIG_IMPORT
-              value: "optional:configserver:http://config-server:8888"
-            
-            # Database URL (matches ${PAYMENT_DB_URL} in config-repo/payment-service.yml)
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx256m"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:29092"
             - name: PAYMENT_DB_URL
-              value: "jdbc:postgresql://postgres:5432/micropay_db"
-            
-            # Database credentials (matches ${POSTGRES_USER} and ${POSTGRES_PASSWORD} in config-repo)
+              value: "jdbc:postgresql://postgres:5432/micropay_payment_db"
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -40,6 +39,29 @@ spec:
                 secretKeyRef:
                   name: micropay-secrets
                   key: POSTGRES_PASSWORD
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8084
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -49,6 +71,6 @@ spec:
   selector:
     app: payment-service
   ports:
-    - port: 8083
-      targetPort: 8083
+    - port: 8084
+      targetPort: 8084
   type: ClusterIP

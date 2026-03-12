@@ -59,19 +59,20 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push backend images
-        working-directory: infrastructure/docker
         run: |
-          docker build -f ../../services/api-gateway/Dockerfile -t $ECR_REGISTRY/micropay-api-gateway:$IMAGE_TAG ../../services
-          docker build -f ../../services/auth-service/Dockerfile -t $ECR_REGISTRY/micropay-auth-service:$IMAGE_TAG ../../services
-          docker build -f ../../services/wallet-service/Dockerfile -t $ECR_REGISTRY/micropay-wallet-service:$IMAGE_TAG ../../services
-          docker build -f ../../services/payment-service/Dockerfile -t $ECR_REGISTRY/micropay-payment-service:$IMAGE_TAG ../../services
-          docker build -f ../../services/transaction-service/Dockerfile -t $ECR_REGISTRY/micropay-transaction-service:$IMAGE_TAG ../../services
-          docker build -f ../../services/notification-service/Dockerfile -t $ECR_REGISTRY/micropay-notification-service:$IMAGE_TAG ../../services
-          docker build -f ../../services/eureka-server/Dockerfile -t $ECR_REGISTRY/micropay-eureka-server:$IMAGE_TAG ../../services
-          docker build -f ../../services/config-server/Dockerfile -t $ECR_REGISTRY/micropay-config-server:$IMAGE_TAG ../../services
+          docker build -t $ECR_REGISTRY/micropay-api-gateway:$IMAGE_TAG services/api-gateway
+          docker build -f services/auth-service/Dockerfile -t $ECR_REGISTRY/micropay-auth-service:$IMAGE_TAG services
+          docker build -f services/user-service/Dockerfile -t $ECR_REGISTRY/micropay-user-service:$IMAGE_TAG services
+          docker build -f services/wallet-service/Dockerfile -t $ECR_REGISTRY/micropay-wallet-service:$IMAGE_TAG services
+          docker build -f services/payment-service/Dockerfile -t $ECR_REGISTRY/micropay-payment-service:$IMAGE_TAG services
+          docker build -f services/transaction-service/Dockerfile -t $ECR_REGISTRY/micropay-transaction-service:$IMAGE_TAG services
+          docker build -f services/notification-service/Dockerfile -t $ECR_REGISTRY/micropay-notification-service:$IMAGE_TAG services
+          docker build -t $ECR_REGISTRY/micropay-eureka-server:$IMAGE_TAG services/eureka-server
+          docker build -t $ECR_REGISTRY/micropay-config-server:$IMAGE_TAG services/config-server
 
           docker push $ECR_REGISTRY/micropay-api-gateway:$IMAGE_TAG
           docker push $ECR_REGISTRY/micropay-auth-service:$IMAGE_TAG
+          docker push $ECR_REGISTRY/micropay-user-service:$IMAGE_TAG
           docker push $ECR_REGISTRY/micropay-wallet-service:$IMAGE_TAG
           docker push $ECR_REGISTRY/micropay-payment-service:$IMAGE_TAG
           docker push $ECR_REGISTRY/micropay-transaction-service:$IMAGE_TAG
@@ -80,9 +81,8 @@ jobs:
           docker push $ECR_REGISTRY/micropay-config-server:$IMAGE_TAG
 
       - name: Build and push frontend image
-        working-directory: frontend
         run: |
-          docker build -t $ECR_REGISTRY/micropay-frontend:$IMAGE_TAG .
+          docker build --build-arg VITE_API_BASE_URL=/api -t $ECR_REGISTRY/micropay-frontend:$IMAGE_TAG frontend
           docker push $ECR_REGISTRY/micropay-frontend:$IMAGE_TAG
 
   deploy:
@@ -172,17 +172,23 @@ jobs:
           set -euo pipefail
           docker build -t "$ECR_REGISTRY/micropay-api-gateway:$IMAGE_TAG" services/api-gateway
           docker build -f services/auth-service/Dockerfile -t "$ECR_REGISTRY/micropay-auth-service:$IMAGE_TAG" services
+          docker build -f services/user-service/Dockerfile -t "$ECR_REGISTRY/micropay-user-service:$IMAGE_TAG" services
           docker build -f services/wallet-service/Dockerfile -t "$ECR_REGISTRY/micropay-wallet-service:$IMAGE_TAG" services
           docker build -f services/payment-service/Dockerfile -t "$ECR_REGISTRY/micropay-payment-service:$IMAGE_TAG" services
           docker build -f services/transaction-service/Dockerfile -t "$ECR_REGISTRY/micropay-transaction-service:$IMAGE_TAG" services
           docker build -f services/notification-service/Dockerfile -t "$ECR_REGISTRY/micropay-notification-service:$IMAGE_TAG" services
+          docker build -t "$ECR_REGISTRY/micropay-eureka-server:$IMAGE_TAG" services/eureka-server
+          docker build -t "$ECR_REGISTRY/micropay-config-server:$IMAGE_TAG" services/config-server
 
           docker push "$ECR_REGISTRY/micropay-api-gateway:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/micropay-auth-service:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/micropay-user-service:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/micropay-wallet-service:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/micropay-payment-service:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/micropay-transaction-service:$IMAGE_TAG"
           docker push "$ECR_REGISTRY/micropay-notification-service:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/micropay-eureka-server:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/micropay-config-server:$IMAGE_TAG"
 
       - name: Build and push frontend image (for EC2 nginx)
         run: |

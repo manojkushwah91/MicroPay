@@ -2,6 +2,8 @@ package com.micropay.wallet.service;
 
 import com.micropay.wallet.dto.WalletBalanceUpdatedEvent;
 import com.micropay.wallet.dto.WalletResponse;
+import com.micropay.events.dto.PaymentRefundedEvent;
+import org.springframework.kafka.annotation.KafkaListener;
 import com.micropay.wallet.exception.InsufficientBalanceException;
 import com.micropay.wallet.exception.WalletNotFoundException;
 import com.micropay.wallet.model.Wallet;
@@ -32,6 +34,17 @@ public class WalletService {
                         KafkaTemplate<String, WalletBalanceUpdatedEvent> kafkaTemplate) {
         this.walletRepository = walletRepository;
         this.kafkaTemplate = kafkaTemplate;
+    }
+
+    @Transactional
+    public WalletResponse topUpWallet(UUID userId, BigDecimal amount) {
+        return creditWallet(userId, amount, "TOP_UP");
+    }
+
+    @KafkaListener(topics = "payment.refunded", groupId = "wallet-service-consumer-group")
+    public void consumePaymentRefundedEvent(PaymentRefundedEvent event) {
+        logger.info("Consumed payment.refunded event for payment: {}", event.getPaymentId());
+        creditWallet(event.getUserId(), event.getAmount(), event.getPaymentId().toString());
     }
 
     /**

@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: auth-service
-  config:
-    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config-server:8888}
   datasource:
     url: ${AUTH_DB_URL:jdbc:postgresql://postgres:5432/micropay_auth_db}
     username: ${POSTGRES_USER:postgres}
@@ -29,8 +27,9 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
+  zipkin:
+    base-url: http://zipkin:9411
   flyway:
-    enabled: true
     locations: classpath:db/migration
   kafka:
     bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
@@ -61,10 +60,13 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: "*"
   endpoint:
     health:
       show-details: when-authorized

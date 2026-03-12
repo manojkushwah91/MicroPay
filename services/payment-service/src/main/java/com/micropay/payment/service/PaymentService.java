@@ -1,6 +1,7 @@
 package com.micropay.payment.service;
 
 import com.micropay.payment.dto.*;
+import com.micropay.events.dto.PaymentRefundedEvent;
 import com.micropay.payment.exception.DuplicatePaymentException;
 import com.micropay.payment.exception.PaymentNotFoundException;
 import com.micropay.payment.model.Payment;
@@ -12,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import java.time.LocalDateTime; 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -38,6 +39,48 @@ public class PaymentService {
                         KafkaTemplate<String, Object> kafkaTemplate) {
         this.paymentRepository = paymentRepository;
         this.kafkaTemplate = kafkaTemplate;
+    }
+
+    private void publishPaymentRefundedEvent(Payment payment) {
+        try {
+            PaymentRefundedEvent event = new PaymentRefundedEvent(
+                payment.getPaymentId(),
+                UUID.fromString(payment.getDescription().substring(20)),
+                payment.getPayerUserId(),
+                payment.getPayeeUserId(),
+                payment.getAmount(),
+                payment.getCurrency()
+            );
+
+            kafkaTemplate.send("payment.refunded", payment.getPaymentId().toString(), event);
+            logger.debug("Published payment.refunded event for payment: {}", payment.getPaymentId());
+        } catch (Exception e) {
+            logger.error("Failed to publish payment.refunded event for payment: {}", payment.getPaymentId(), e);
+        }
+    }
+
+    @Transactional
+    public PaymentResponse refundPayment(UUID paymentId, BigDecimal amount) {
+        Payment originalPayment = paymentRepository.findByPaymentId(paymentId)
+                .orElseThrow(() -> new PaymentNotFoundException("Payment not found: " + paymentId));
+
+        Payment refundPayment = new Payment();
+        refundPayment.setPaymentId(UUID.randomUUID());
+        refundPayment.setPayerUserId(originalPayment.getPayeeUserId());
+        refundPayment.setPayeeUserId(originalPayment.getPayerUserId());
+        refundPayment.setAmount(amount);
+        refundPayment.setCurrency(originalPayment.getCurrency());
+        refundPayment.setPaymentType(PaymentType.REFUND);
+        refundPayment.setStatus(PaymentStatus.COMPLETED);
+        refundPayment.setDescription("Refund for payment: " + originalPayment.getPaymentId());
+        refundPayment.setReference(originalPayment.getReference());
+
+        refundPayment = paymentRepository.save(refundPayment);
+        logger.info("Created refund payment: {} for original payment: {}", refundPayment.getPaymentId(), originalPayment.getPaymentId());
+
+        publishPaymentRefundedEvent(refundPayment);
+
+        return mapToResponse(refundPayment);
     }
 
     /**

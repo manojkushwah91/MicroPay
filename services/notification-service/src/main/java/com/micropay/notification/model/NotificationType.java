@@ -9,7 +9,8 @@ public enum NotificationType {
     PAYMENT_FAILED,
     WALLET_BALANCE_UPDATED,
     ACCOUNT_VERIFIED,
-    SECURITY_ALERT
+    SECURITY_ALERT,
+    PASSWORD_RESET
 }
 
 

@@ -1,28 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
-import { paymentService } from '../services/paymentService';
 import { walletService } from '../services/walletService';
-import type { PaymentRequest, Wallet, ApiError } from '../types';
+import PaymentModal from '../components/PaymentModal';
+import WalletCard from '../components/WalletCard';
+import Skeleton from '../components/Skeleton';
+import type { Wallet, ApiError } from '../types';
 
 export default function Payments() {
   const navigate = useNavigate();
   const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [formData, setFormData] = useState<PaymentRequest>({
-    payerUserId: '',
-    payeeUserId: '',
-    amount: 0,
-    currency: 'USD',
-    paymentType: 'PAYMENT',
-    description: '',
-    reference: '',
-    idempotencyKey: '',
-  });
   const [creditAmount, setCreditAmount] = useState<number>(0);
   const [debitAmount, setDebitAmount] = useState<number>(0);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [debitError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -32,7 +26,6 @@ export default function Payments() {
 
     const userId = authService.getUserId();
     if (userId) {
-      formData.payerUserId = userId;
       loadWallet(userId);
     }
   }, [navigate]);
@@ -43,69 +36,8 @@ export default function Payments() {
       setWallet(walletData);
     } catch (err) {
       console.error('Failed to load wallet:', err);
-    }
-  };
-
-  const validatePayment = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.payeeUserId) {
-      newErrors.payeeUserId = 'Payee user ID is required';
-    }
-
-    if (!formData.amount || formData.amount <= 0) {
-      newErrors.amount = 'Amount must be greater than 0';
-    }
-
-    // REMOVED: Idempotency check (because we generate it automatically below)
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handlePayment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage(null);
-
-    if (!validatePayment()) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // ✅ FIX: Generate the key HERE
-      const paymentData = {
-        ...formData,
-        idempotencyKey: `${Date.now()}-${Math.random()}`
-      };
-
-      await paymentService.initiatePayment(paymentData);
-      
-      setMessage({ type: 'success', text: 'Payment initiated successfully!' });
-      
-      // Reset form (except payer ID)
-      setFormData({
-        ...formData,
-        payeeUserId: '',
-        amount: 0,
-        description: '',
-        reference: '',
-        idempotencyKey: '', 
-      });
-
-      // Reload wallet to show new balance
-      const userId = authService.getUserId();
-      if (userId) {
-        await loadWallet(userId);
-      }
-    } catch (err: any) {
-      const apiError = err.response?.data as ApiError;
-      setMessage({
-        type: 'error',
-        text: apiError?.message || 'Payment initiation failed. Please try again.',
-      });
     } finally {
-      setIsLoading(false);
+      setIsPageLoading(false);
     }
   };
 
@@ -167,160 +99,194 @@ export default function Payments() {
     }
   };
 
+  const handlePaymentSuccess = () => {
+    setMessage({ type: 'success', text: 'Payment initiated successfully!' });
+    const userId = authService.getUserId();
+    if (userId) {
+      loadWallet(userId);
+    }
+  };
+
+  if (isPageLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <Skeleton width="200px" height="40px" className="mb-2" />
+          <Skeleton width="300px" height="20px" />
+        </div>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-fintech-800/50 backdrop-blur-md rounded-2xl p-6 shadow-glass border border-fintech-700/30">
+            <Skeleton width="250px" height="28px" className="mb-6" />
+            <Skeleton variant="card" height="200px" />
+          </div>
+          <div className="bg-fintech-800/50 backdrop-blur-md rounded-2xl p-6 shadow-glass border border-fintech-700/30">
+            <Skeleton width="200px" height="28px" className="mb-6" />
+            <div className="space-y-4">
+              <Skeleton height="50px" />
+              <Skeleton height="50px" />
+              <Skeleton height="50px" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
-        <p className="mt-2 text-gray-600">Initiate payments and manage your wallet.</p>
+      <div className="mb-8 animate-fade-in">
+        <h1 className="text-4xl font-bold text-white mb-2">Payments</h1>
+        <p className="text-fintech-300 text-lg">Send money and manage your wallet</p>
       </div>
 
       {message && (
         <div
-          className={`mb-6 px-4 py-3 rounded ${
+          className={`mb-6 px-6 py-4 rounded-xl backdrop-blur-sm border animate-slide-down ${
             message.type === 'success'
-              ? 'bg-green-50 border border-green-200 text-green-700'
-              : 'bg-red-50 border border-red-200 text-red-700'
+              ? 'bg-success-500/20 text-success-100 border-success-500/30'
+              : 'bg-danger-500/20 text-danger-100 border-danger-500/30'
           }`}
         >
-          {message.text}
+          <div className="flex items-center">
+            {message.type === 'success' ? (
+              <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            )}
+            {message.text}
+          </div>
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Wallet Operations */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Wallet Operations</h2>
-          {wallet && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <p className="text-sm text-gray-600">Current Balance</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: wallet.currency,
-                }).format(wallet.balance)}
-              </p>
-            </div>
-          )}
+        <div className="animate-slide-up">
+          <h2 className="text-2xl font-semibold text-white mb-6">Wallet Operations</h2>
+          
+          {wallet && <WalletCard wallet={wallet} />}
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Credit Amount
-              </label>
-              <div className="flex space-x-2">
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={creditAmount || ''}
-                  onChange={(e) => setCreditAmount(parseFloat(e.target.value) || 0)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="0.00"
-                />
-                <button
-                  onClick={handleCredit}
-                  disabled={isLoading}
-                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50"
-                >
-                  Credit
-                </button>
+          <div className="mt-6 bg-fintech-800/50 backdrop-blur-md rounded-2xl p-6 shadow-glass border border-fintech-700/30">
+            <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-fintech-300 mb-2">
+                  Credit Amount
+                </label>
+                <div className="flex space-x-3">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={creditAmount || ''}
+                    onChange={(e) => setCreditAmount(parseFloat(e.target.value) || 0)}
+                    className="flex-1 px-4 py-3 bg-fintech-900/50 border border-fintech-700/30 rounded-lg text-white placeholder-fintech-500 focus:outline-none focus:ring-2 focus:ring-success-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                  <button
+                    onClick={handleCredit}
+                    disabled={isLoading}
+                    className="px-6 py-3 bg-gradient-to-r from-success-500 to-success-600 text-white font-medium rounded-lg hover:from-success-600 hover:to-success-700 transition-all disabled:opacity-50 shadow-lg hover:shadow-glow-green"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    ) : (
+                      'Credit'
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Debit Amount</label>
-              <div className="flex space-x-2">
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={debitAmount || ''}
-                  onChange={(e) => setDebitAmount(parseFloat(e.target.value) || 0)}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="0.00"
-                />
-                <button
-                  onClick={handleDebit}
-                  disabled={isLoading}
-                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
-                >
-                  Debit
-                </button>
+              <div>
+                <label className="block text-sm font-medium text-fintech-300 mb-2">Debit Amount</label>
+                <div className="flex space-x-3">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={debitAmount || ''}
+                    onChange={(e) => setDebitAmount(parseFloat(e.target.value) || 0)}
+                    className="flex-1 px-4 py-3 bg-fintech-900/50 border border-fintech-700/30 rounded-lg text-white placeholder-fintech-500 focus:outline-none focus:ring-2 focus:ring-danger-500 focus:border-transparent"
+                    placeholder="0.00"
+                  />
+                  <button
+                    onClick={handleDebit}
+                    disabled={isLoading}
+                    className="px-6 py-3 bg-gradient-to-r from-danger-500 to-danger-600 text-white font-medium rounded-lg hover:from-danger-600 hover:to-danger-700 transition-all disabled:opacity-50 shadow-lg"
+                  >
+                    {isLoading ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                    ) : (
+                      'Debit'
+                    )}
+                  </button>
+                </div>
+                {debitError && <p className="text-red-500 text-sm mt-1">{debitError}</p>}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Payment Form */}
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-6">Initiate Payment</h2>
-          <form onSubmit={handlePayment} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Payee User ID
-              </label>
-              <input
-                type="text"
-                value={formData.payeeUserId}
-                onChange={(e) => setFormData({ ...formData, payeeUserId: e.target.value })}
-                className={`w-full px-3 py-2 border ${
-                  errors.payeeUserId ? 'border-red-300' : 'border-gray-300'
-                } rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
-                placeholder="Enter payee user ID"
-              />
-              {errors.payeeUserId && (
-                <p className="mt-1 text-sm text-red-600">{errors.payeeUserId}</p>
-              )}
+        {/* Send Payment */}
+        <div className="animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="bg-fintech-800/50 backdrop-blur-md rounded-2xl p-6 shadow-glass border border-fintech-700/30">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-white">Send Payment</h2>
+              <div className="bg-primary-500/20 rounded-full p-3 border border-primary-500/30">
+                <svg className="w-6 h-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount || ''}
-                onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                className={`w-full px-3 py-2 border ${
-                  errors.amount ? 'border-red-300' : 'border-gray-300'
-                } rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500`}
-                placeholder="0.00"
-              />
-              {errors.amount && <p className="mt-1 text-sm text-red-600">{errors.amount}</p>}
+            <div className="text-center py-8">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary-500/20 to-primary-600/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-primary-500/30">
+                <svg className="w-8 h-8 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">Quick Payment Transfer</h3>
+              <p className="text-fintech-400 mb-6">Send money instantly to any user</p>
+              
+              <button
+                onClick={() => setIsPaymentModalOpen(true)}
+                className="px-8 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-glow"
+              >
+                Send Money Now
+              </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <input
-                type="text"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Payment description"
-              />
+            <div className="mt-6 pt-6 border-t border-fintech-700/30">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-primary-400">2.5s</p>
+                  <p className="text-xs text-fintech-500">Avg Transfer</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-success-400">99.9%</p>
+                  <p className="text-xs text-fintech-500">Success Rate</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-warning-400">$0.25</p>
+                  <p className="text-xs text-fintech-500">Min Transfer</p>
+                </div>
+              </div>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Reference</label>
-              <input
-                type="text"
-                value={formData.reference}
-                onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-                placeholder="Payment reference"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Processing...' : 'Initiate Payment'}
-            </button>
-          </form>
+          </div>
         </div>
       </div>
+
+      {/* Payment Modal */}
+      <PaymentModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 }

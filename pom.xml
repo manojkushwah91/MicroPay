@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.micropay</groupId>
@@ -13,14 +13,15 @@
 
     <modules>
         <module>services/micropay-events</module>
+        <module>services/config-server</module>
+        <module>services/eureka-server</module>
         <module>services/api-gateway</module>
         <module>services/auth-service</module>
+        <module>services/user-service</module>
         <module>services/wallet-service</module>
         <module>services/payment-service</module>
         <module>services/transaction-service</module>
         <module>services/notification-service</module>
-        <module>services/config-server</module>
-        <module>services/eureka-server</module>
     </modules>
 
     <dependencyManagement>
@@ -31,6 +32,11 @@
                 <version>${spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.github.ulisesbocchio</groupId>
+                <artifactId>jasypt-spring-boot-starter</artifactId>
+                <version>3.0.5</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

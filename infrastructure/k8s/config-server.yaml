@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: config-server
-          image: nexus.example.com/micropay/config-server:latest
+          image: ${ECR_REGISTRY:-micropay}/micropay-config-server:${IMAGE_TAG:-latest}
           ports:
             - containerPort: 8888
 ---

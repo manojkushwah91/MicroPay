@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: zookeeper
-          image: confluentinc/cp-zookeeper:7.6.1
+          image: confluentinc/cp-zookeeper:7.5.0
           ports:
             - containerPort: 2181
           env:
@@ -39,8 +39,9 @@ spec:
     spec:
       containers:
         - name: kafka
-          image: confluentinc/cp-kafka:7.6.1
+          image: confluentinc/cp-kafka:7.5.0
           ports:
+            - containerPort: 29092
             - containerPort: 9092
           env:
             - name: KAFKA_BROKER_ID
@@ -48,9 +49,11 @@ spec:
             - name: KAFKA_ZOOKEEPER_CONNECT
               value: "zookeeper:2181"
             - name: KAFKA_LISTENERS
-              value: "PLAINTEXT://:9092"
+              value: "PLAINTEXT://:29092,PLAINTEXT_HOST://:9092"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://kafka:9092"
+              value: "PLAINTEXT://kafka:29092,PLAINTEXT_HOST://kafka:9092"
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: "PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT"
             - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
               value: "true"
 ---
@@ -75,7 +78,12 @@ spec:
   selector:
     app: kafka
   ports:
-    - protocol: TCP
+    - name: internal
+      protocol: TCP
+      port: 29092
+      targetPort: 29092
+    - name: external
+      protocol: TCP
       port: 9092
       targetPort: 9092
   type: ClusterIP

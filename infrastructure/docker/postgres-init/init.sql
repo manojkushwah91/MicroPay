@@ -1,9 +1,11 @@
 CREATE DATABASE micropay_auth_db;
+CREATE DATABASE micropay_user_db;
 CREATE DATABASE micropay_wallet_db;
 CREATE DATABASE micropay_payment_db;
 CREATE DATABASE micropay_transaction_db;
 CREATE DATABASE micropay_notification_db;
 GRANT ALL PRIVILEGES ON DATABASE micropay_auth_db TO postgres;
+GRANT ALL PRIVILEGES ON DATABASE micropay_user_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE micropay_wallet_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE micropay_payment_db TO postgres;
 GRANT ALL PRIVILEGES ON DATABASE micropay_transaction_db TO postgres;

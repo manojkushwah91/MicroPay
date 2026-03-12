@@ -5,11 +5,24 @@ spring:
   application:
     name: wallet-service
   config:
-    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config-server:8888}
+    import: ${SPRING_CONFIG_IMPORT:}
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
+    consumer:
+      group-id: wallet-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        acks: all
+        retries: 3
+        enable.idempotence: true
   datasource:
     url: ${SPRING_DATASOURCE_URL:${WALLET_DB_URL:jdbc:postgresql://postgres:5432/micropay_wallet_db}}
     username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:postgres}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:${DB_PASSWORD}}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD}}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       maximum-pool-size: 10
@@ -31,19 +44,10 @@ spring:
         order_inserts: true
         order_updates: true
 
-  flyway:
+  zipkin:
+    base-url: http://zipkin:9411
     enabled: true
     locations: classpath:db/migration
-
-  kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:kafka:29092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        acks: all
-        retries: 3
-        enable.idempotence: true
 
 eureka:
   client:
@@ -60,10 +64,17 @@ eureka:
     lease-expiration-duration-in-seconds: 90
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
   endpoint:
     health:
       show-details: when-authorized

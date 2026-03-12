@@ -14,24 +14,50 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: nexus.example.com/micropay/api-gateway:latest
+          image: ${ECR_REGISTRY:-local}/micropay-api-gateway:${IMAGE_TAG:-latest}
           ports:
             - containerPort: 8080
-          envFrom:
-            - configMapRef:
-                name: api-gateway-config
           env:
-            - name: SPRING_CLOUD_CONFIG_URI
-              value: http://config-server:8888
             - name: SPRING_PROFILES_ACTIVE
-              value: k8s
+              value: "prod"
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx256m"
+            - name: FRONTEND_URL
+              value: "http://127.0.0.1"
+            - name: SPRING_DATA_REDIS_HOST
+              value: "redis"
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE
+              value: "http://eureka-server:8761/eureka"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
                   name: micropay-secrets
                   key: JWT_SECRET
-            - name: JAVA_OPTS
-              value: -Xms256m -Xmx512m
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service

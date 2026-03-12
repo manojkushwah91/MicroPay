@@ -14,15 +14,22 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: postgres:16
+          image: postgres:16-alpine
           ports:
             - containerPort: 5432
-          envFrom:
-            - secretRef:
-                name: micropay-secrets
           env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: micropay-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: micropay-secrets
+                  key: POSTGRES_PASSWORD
             - name: POSTGRES_DB
-              value: postgres # Default DB to connect to initially
+              value: postgres
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage

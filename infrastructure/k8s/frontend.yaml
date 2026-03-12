@@ -14,12 +14,9 @@ spec:
     spec:
       containers:
         - name: micropay-frontend
-          image: nexus.example.com/micropay/frontend:latest
+          image: ${ECR_REGISTRY:-micropay}/micropay-frontend:${IMAGE_TAG:-latest}
           ports:
-            - containerPort: 3000
-          envFrom:
-            - configMapRef:
-                name: frontend-config
+            - containerPort: 80
           resources:
             requests:
               cpu: 100m
@@ -37,6 +34,6 @@ spec:
     app: micropay-frontend
   ports:
     - protocol: TCP
-      port: 3000
-      targetPort: 3000
+      port: 80
+      targetPort: 80
   type: ClusterIP

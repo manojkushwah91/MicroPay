@@ -14,22 +14,23 @@ spec:
     spec:
       containers:
         - name: auth-service
-          # IMPORTANT: Changed to use the image you built locally
-          image: docker-auth-service:latest 
-          imagePullPolicy: IfNotPresent # Uses local image if available
+          image: ${ECR_REGISTRY:-local}/micropay-auth-service:${IMAGE_TAG:-latest}
           ports:
             - containerPort: 8081
-          envFrom:
-            - configMapRef:
-                name: auth-service-config
           env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx256m"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:29092"
             # Config Server connection
             - name: SPRING_CONFIG_IMPORT
               value: "optional:configserver:http://config-server:8888"
             
             # Database URL (matches ${AUTH_DB_URL} in config-repo/auth-service.yml)
             - name: AUTH_DB_URL
-              value: "jdbc:postgresql://postgres:5432/micropay_db"
+              value: "jdbc:postgresql://postgres:5432/micropay_auth_db"
             
             # Database credentials (matches ${POSTGRES_USER} and ${POSTGRES_PASSWORD} in config-repo)
             - name: POSTGRES_USER
@@ -49,6 +50,29 @@ spec:
                 secretKeyRef:
                   name: micropay-secrets
                   key: JWT_SECRET
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8081
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service

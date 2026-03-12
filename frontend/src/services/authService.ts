@@ -7,12 +7,21 @@ export const authService = {
     return response.data;
   },
 
+  async forgotPassword(email: string): Promise<void> {
+    await api.post('/auth/forgot-password', { email });
+  },
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await api.post('/auth/reset-password', { token, newPassword });
+  },
+
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     const response = await api.post<AuthResponse>('/auth/register', userData);
     return response.data;
   },
 
   logout(): void {
+    api.post('/auth/logout');
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
   },

@@ -9,7 +9,7 @@ spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL:${TRANSACTION_DB_URL:jdbc:postgresql://postgres:5432/micropay_transaction_db}}
     username: ${SPRING_DATASOURCE_USERNAME:${POSTGRES_USER:postgres}}
-    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:${DB_PASSWORD}}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD}}
     driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
     hikari:
       maximum-pool-size: 10
@@ -31,7 +31,8 @@ spring:
         order_inserts: true
         order_updates: true
 
-  flyway:
+  zipkin:
+    base-url: http://zipkin:9411
     enabled: true
     locations: classpath:db/migration
 
@@ -68,10 +69,17 @@ eureka:
     lease-expiration-duration-in-seconds: 90
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
   endpoint:
     health:
       show-details: when-authorized

@@ -2,6 +2,7 @@ package com.micropay.payment.controller;
 
 import com.micropay.payment.dto.PaymentRequest;
 import com.micropay.payment.dto.PaymentResponse;
+import com.micropay.payment.dto.RefundRequest;
 import com.micropay.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -25,6 +26,13 @@ public class PaymentController {
 
     public PaymentController(PaymentService paymentService) {
         this.paymentService = paymentService;
+    }
+
+    @PostMapping("/{paymentId}/refund")
+    public ResponseEntity<PaymentResponse> refundPayment(@PathVariable UUID paymentId, @Valid @RequestBody RefundRequest request) {
+        logger.info("Refunding payment: {} with amount: {}", paymentId, request.getAmount());
+        PaymentResponse payment = paymentService.refundPayment(paymentId, request.getAmount());
+        return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
 
     /**

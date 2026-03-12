@@ -4,27 +4,15 @@ server:
 spring:
   application:
     name: eureka-server
-  config:
-    import: ${SPRING_CONFIG_IMPORT:optional:configserver:http://config-server:8888}
 
 eureka:
   instance:
-    hostname: ${EUREKA_INSTANCE_HOSTNAME:eureka-server}
+    hostname: eureka-server
   client:
-    # Disable self-registration for standalone Eureka server
     register-with-eureka: false
     fetch-registry: false
     service-url:
-      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
-  server:
-    # Enable self-preservation mode (prevents registry cleanup)
-    enable-self-preservation: true
-    # Eviction task timer interval (in milliseconds)
-    eviction-interval-timer-in-ms: 60000
-    # Renewal threshold percentage
-    renewal-percent-threshold: 0.85
-    # Response cache update interval (in milliseconds)
-    response-cache-update-interval-ms: 30000
+      defaultZone: http://eureka-server:8761/eureka/
 
 management:
   endpoints:
@@ -33,10 +21,7 @@ management:
         include: health,info
   endpoint:
     health:
-      show-details: when-authorized
-  info:
-    env:
-      enabled: true
+      show-details: always
 
 info:
   app:
@@ -50,15 +35,3 @@ logging:
     com.netflix.eureka: INFO
     com.netflix.discovery: INFO
     com.micropay: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info, prometheus
-  metrics:
-    tags:
-      application: ${spring.application.name}

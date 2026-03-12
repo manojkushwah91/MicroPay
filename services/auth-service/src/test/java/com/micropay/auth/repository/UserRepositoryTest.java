@@ -24,7 +24,7 @@ class UserRepositoryTest {
     void findByEmail() {
         User user = new User();
         user.setEmail("repo@example.com");
-        user.setPassword("pw");
+        user.setPassword("12345678901234567890123456789012345678901234567890123456789012345678901234567890");
         user.setFirstName("Repo");
         user.setLastName("User");
         user.setStatus(UserStatus.ACTIVE);

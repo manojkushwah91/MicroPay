@@ -1,6 +1,9 @@
 # ===== Java / Maven =====
 **/target/
 **/*.jar
+*.class
+BOOT-INF/
+META-INF/
 
 # ===== Environment files =====
 .env
@@ -8,6 +11,7 @@
 
 # ===== Node =====
 **/node_modules/
+dist/
 
 # ===== Logs =====
 *.log

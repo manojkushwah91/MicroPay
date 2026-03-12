@@ -6,12 +6,14 @@ import com.micropay.auth.dto.RegisterRequest;
 import com.micropay.auth.model.Role;
 import com.micropay.auth.model.User;
 import com.micropay.auth.model.UserStatus;
+import com.micropay.auth.repository.BlockedTokenRepository;
+import com.micropay.auth.repository.PasswordResetTokenRepository;
 import com.micropay.auth.repository.RoleRepository;
 import com.micropay.auth.repository.UserRepository;
+import com.micropay.events.dto.PasswordResetEvent;
 import com.micropay.events.dto.UserCreatedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -36,6 +38,9 @@ class AuthServiceTest {
     private final JwtService jwtService = mock(JwtService.class);
     private final AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
     private final KafkaTemplate<String, UserCreatedEvent> kafkaTemplate = mock(KafkaTemplate.class);
+    private final KafkaTemplate<String, PasswordResetEvent> passwordResetKafkaTemplate = mock(KafkaTemplate.class);
+    private final PasswordResetTokenRepository passwordResetTokenRepository = mock(PasswordResetTokenRepository.class);
+    private final BlockedTokenRepository blockedTokenRepository = mock(BlockedTokenRepository.class);
 
     private final AuthService authService = new AuthService(
             userRepository,
@@ -43,7 +48,10 @@ class AuthServiceTest {
             passwordEncoder,
             jwtService,
             authenticationManager,
-            kafkaTemplate
+            kafkaTemplate,
+            passwordResetKafkaTemplate,
+            passwordResetTokenRepository,
+            blockedTokenRepository
     );
 
     @Test
@@ -56,7 +64,7 @@ class AuthServiceTest {
         req.setLastName("User");
 
         when(userRepository.existsByEmail(req.getEmail())).thenReturn(false);
-        when(passwordEncoder.encode("secret")).thenReturn("ENC");
+        when(passwordEncoder.encode("secret")).thenReturn("encoded-secret");
 
         Role role = new Role("ROLE_USER", "Default user role");
         when(roleRepository.findByName("ROLE_USER")).thenReturn(Optional.of(role));
@@ -66,7 +74,7 @@ class AuthServiceTest {
         saved.setEmail(req.getEmail());
         saved.setFirstName(req.getFirstName());
         saved.setLastName(req.getLastName());
-        saved.setPassword("ENC");
+        saved.setPassword("encoded-secret");
         saved.setStatus(UserStatus.ACTIVE);
         saved.setCreatedAt(LocalDateTime.now());
 
@@ -92,7 +100,7 @@ class AuthServiceTest {
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setEmail(req.getEmail());
-        user.setPassword("ENC");
+        user.setPassword("encoded-secret");
         user.setStatus(UserStatus.ACTIVE);
 
         when(userRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(user));
@@ -114,5 +122,3 @@ class AuthServiceTest {
                 .isInstanceOf(UsernameNotFoundException.class);
     }
 }
-
-

@@ -4,6 +4,8 @@ import com.micropay.notification.dto.NotificationSendEvent;
 import com.micropay.notification.dto.NotificationResponse;
 import com.micropay.notification.dto.PaymentCompletedEvent;
 import com.micropay.notification.dto.TransactionRecordedEvent;
+import com.micropay.events.dto.PasswordResetEvent;
+import org.springframework.kafka.annotation.KafkaListener;
 import com.micropay.notification.model.Notification;
 import com.micropay.notification.model.NotificationChannel;
 import com.micropay.notification.model.NotificationStatus;
@@ -40,6 +42,30 @@ public class NotificationService {
                               KafkaTemplate<String, NotificationSendEvent> kafkaTemplate) {
         this.notificationRepository = notificationRepository;
         this.kafkaTemplate = kafkaTemplate;
+    }
+
+    /**
+     * Send notification for password reset event
+     */
+    @Transactional
+    @KafkaListener(topics = "password.reset", groupId = "notification-service-consumer-group")
+    public void sendPasswordResetNotification(PasswordResetEvent event) {
+        try {
+            sendNotification(
+                event.getUserId(),
+                NotificationType.PASSWORD_RESET,
+                NotificationChannel.EMAIL,
+                "Password Reset Request",
+                String.format("To reset your password, use the following token: %s", event.getToken()),
+                event.getUserId(),
+                "USER"
+            );
+
+            logger.info("Sent password reset notification for user: {}", event.getUserId());
+        } catch (Exception e) {
+            logger.error("Failed to send password reset notification for user: {}", 
+                        event.getUserId(), e);
+        }
     }
 
     /**

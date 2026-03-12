@@ -16,7 +16,7 @@ spec:
               service:
                 name: micropay-frontend
                 port:
-                  number: 3000
+                  number: 80
           # API Gateway
           - path: /api
             pathType: Prefix

@@ -6,7 +6,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.micropay.auth.repository.BlockedTokenRepository;
 import org.springframework.stereotype.Service;
+import com.micropay.auth.repository.BlockedTokenRepository;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
@@ -21,11 +23,19 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    private final String secret;
+    private final Long expiration;
+    private final BlockedTokenRepository blockedTokenRepository;
 
-    @Value("${jwt.expiration:86400000}") // fallback to 24 hours
-    private Long expiration;
+    public JwtService(
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration:86400000}") Long expiration,
+            BlockedTokenRepository blockedTokenRepository
+    ) {
+        this.secret = secret;
+        this.expiration = expiration;
+        this.blockedTokenRepository = blockedTokenRepository;
+    }
 
     /**
      * Extract username from token
@@ -52,7 +62,7 @@ public class JwtService {
     /**
      * Extract all claims from token (modern parser)
      */
-    private Claims extractAllClaims(String token) {
+    public Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())
                 .build()
@@ -102,7 +112,7 @@ public class JwtService {
      */
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
-        return username.equals(userDetails.getUsername()) && !isTokenExpired(token);
+        return username.equals(userDetails.getUsername()) && !isTokenExpired(token) && !blockedTokenRepository.existsByToken(token);
     }
 
     /**

@@ -16,6 +16,11 @@ spring:
         enabled: false
 
     gateway:
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 5s
+      httpserver:
+        connect-timeout: 5000
       discovery:
         locator:
           enabled: true
@@ -23,7 +28,7 @@ spring:
 
       routes:
         - id: auth-service
-          uri: lb://AUTH-SERVICE
+          uri: http://auth-service:8081
           predicates:
             - Path=/api/auth/**
           filters:
@@ -58,18 +63,18 @@ spring:
             - StripPrefix=1
 
       default-filters:
-        - name: RequestRateLimiter
-          args:
-            key-resolver: "#{@ipKeyResolver}"
-            redis-rate-limiter.replenishRate: 10
-            redis-rate-limiter.burstCapacity: 20
-            redis-rate-limiter.requestedTokens: 1
+        # - name: RequestRateLimiter
+        #   args:
+        #     key-resolver: "#{@ipKeyResolver}"
+        #     redis-rate-limiter.replenishRate: 10
+        #     redis-rate-limiter.burstCapacity: 20
+        #     redis-rate-limiter.requestedTokens: 1
 
       globalcors:
         corsConfigurations:
           '[/**]':
             allowedOrigins:
-              - ${FRONTEND_URL:http://localhost}
+              - ${FRONTEND_URL:http://frontend}
             allowedMethods:
               - GET
               - POST

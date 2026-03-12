@@ -32,7 +32,7 @@ public class UserCreatedEventConsumer {
      * Consume user.created events from Kafka
      * Creates a wallet for the new user
      */
-    @KafkaListener(topics = "user.created", groupId = "${spring.kafka.consumer.group-id}",containerFactory = "kafkaListenerContainerFactory")
+    @KafkaListener(topics = "user.created", groupId = "wallet-service-group", containerFactory = "kafkaListenerContainerFactory")
     public void consumeUserCreatedEvent(
             @Payload UserCreatedEvent event,
             @Header(KafkaHeaders.RECEIVED_KEY) String key,

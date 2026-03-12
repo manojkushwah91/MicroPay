@@ -14,22 +14,21 @@ spec:
     spec:
       containers:
         - name: notification-service
-          image: nexus.example.com/micropay/notification-service:latest
+          image: ${ECR_REGISTRY:-local}/micropay-notification-service:${IMAGE_TAG:-latest}
           ports:
-            - containerPort: 8085
+            - containerPort: 8086
           envFrom:
             - configMapRef:
                 name: notification-service-config
           env:
-            # Config Server connection
-            - name: SPRING_CONFIG_IMPORT
-              value: "optional:configserver:http://config-server:8888"
-            
-            # Database URL (matches ${NOTIFICATION_DB_URL} in config-repo/notification-service.yml)
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: JAVA_OPTS
+              value: "-Xms128m -Xmx256m"
+            - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka:29092"
             - name: NOTIFICATION_DB_URL
-              value: "jdbc:postgresql://postgres:5432/micropay_db"
-            
-            # Database credentials (matches ${POSTGRES_USER} and ${POSTGRES_PASSWORD} in config-repo)
+              value: "jdbc:postgresql://postgres:5432/micropay_notification_db"
             - name: POSTGRES_USER
               valueFrom:
                 secretKeyRef:
@@ -40,6 +39,29 @@ spec:
                 secretKeyRef:
                   name: micropay-secrets
                   key: POSTGRES_PASSWORD
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8086
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
 ---
 apiVersion: v1
 kind: Service
@@ -49,6 +71,6 @@ spec:
   selector:
     app: notification-service
   ports:
-    - port: 8085
-      targetPort: 8085
+    - port: 8086
+      targetPort: 8086
   type: ClusterIP

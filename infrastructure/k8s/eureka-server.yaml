@@ -14,9 +14,35 @@ spec:
     spec:
       containers:
         - name: eureka-server
-          image: nexus.example.com/micropay/eureka-server:latest
+          image: ${ECR_REGISTRY:-local}/micropay-eureka-server:${IMAGE_TAG:-latest}
           ports:
             - containerPort: 8761
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 45
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8761
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "200m"
+            limits:
+              memory: "256Mi"
+              cpu: "400m"
 ---
 apiVersion: v1
 kind: Service

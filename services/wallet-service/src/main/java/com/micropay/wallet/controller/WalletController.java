@@ -4,6 +4,7 @@ import com.micropay.wallet.dto.CreditRequest;
 import com.micropay.wallet.dto.DebitRequest;
 import com.micropay.wallet.dto.WalletResponse;
 import com.micropay.wallet.service.WalletService;
+import com.micropay.wallet.dto.TopUpRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,7 +18,7 @@ import java.util.UUID;
  * REST controller for wallet operations
  */
 @RestController
-@RequestMapping("/api/wallet")
+@RequestMapping("/wallet")
 public class WalletController {
 
     private static final Logger logger = LoggerFactory.getLogger(WalletController.class);
@@ -26,6 +27,13 @@ public class WalletController {
 
     public WalletController(WalletService walletService) {
         this.walletService = walletService;
+    }
+
+    @PostMapping("/{userId}/topup")
+    public ResponseEntity<WalletResponse> topUpWallet(@PathVariable UUID userId, @Valid @RequestBody TopUpRequest request) {
+        logger.info("Topping up wallet for user: {} with amount: {}", userId, request.getAmount());
+        WalletResponse wallet = walletService.topUpWallet(userId, request.getAmount());
+        return ResponseEntity.ok(wallet);
     }
 
     /**
