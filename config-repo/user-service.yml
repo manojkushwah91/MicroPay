@@ -45,9 +45,7 @@ eureka:
     fetch-registry: true
     healthcheck:
       enabled: true
-
   instance:
-    hostname: ${EUREKA_INSTANCE_HOSTNAME}
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90

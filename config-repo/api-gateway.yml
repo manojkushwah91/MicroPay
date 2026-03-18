@@ -76,9 +76,12 @@ eureka:
       defaultZone: ${EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE}
     register-with-eureka: true
     fetch-registry: true
-
+    healthcheck:
+      enabled: true
   instance:
     prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 30
+    lease-expiration-duration-in-seconds: 90
 
 management:
   endpoints:

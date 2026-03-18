@@ -4,7 +4,7 @@ server:
 spring:
   application:
     name: auth-service
-    
+
   datasource:
     url: ${AUTH_DB_URL}
     username: ${POSTGRES_USER}
@@ -16,6 +16,7 @@ spring:
       connection-timeout: 30000
       idle-timeout: 600000
       max-lifetime: 1800000
+  
   jpa:
     hibernate:
       ddl-auto: update
@@ -28,6 +29,10 @@ spring:
           batch_size: 20
         order_inserts: true
         order_updates: true
+
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
+
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -54,7 +59,6 @@ eureka:
     healthcheck:
       enabled: true
   instance:
-    hostname: ${EUREKA_INSTANCE_HOSTNAME}
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 30
     lease-expiration-duration-in-seconds: 90
