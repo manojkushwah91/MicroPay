@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: wallet-service
-  config:
-    import: "optional:configserver:http://config-server:8888"
 
   datasource:
     url: ${WALLET_DB_URL}

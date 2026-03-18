@@ -10,9 +10,6 @@ spring:
       host: redis
       port: 6379
 
-  config:
-    import: "optional:configserver:http://config-server:8888"
-
   cloud:
     gateway:
       default-filters:

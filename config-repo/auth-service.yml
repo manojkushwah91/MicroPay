@@ -4,8 +4,7 @@ server:
 spring:
   application:
     name: auth-service
-  config:
-    import: optional:configserver:http://config-server:8888
+    
   datasource:
     url: ${AUTH_DB_URL}
     username: ${POSTGRES_USER}
