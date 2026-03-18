@@ -194,6 +194,9 @@ services:
       - "8888:8888"
     environment:
       SPRING_PROFILES_ACTIVE: native
+    SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: file:/config-repo
+    volumes:
+      - ../../config-repo:/config-repo
     networks:
       - micropay-network
     healthcheck:
