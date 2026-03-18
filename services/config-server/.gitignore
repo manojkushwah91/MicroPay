@@ -28,5 +28,5 @@ Thumbs.db
 *.log
 
 # Config repository (if contains sensitive data)
-config-repo/
+#config-repo/
 

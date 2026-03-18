@@ -14,33 +14,23 @@ spring:
     active: native
   cloud:
     config:
-      # CRITICAL FIX: Disables the client from trying to fetch config from port 8888.
-      # This stops the infinite loop causing the Read timed out error.
       enabled: false 
       server:
         native:
-          # Refined for both local IDE runs and Docker container runs
-          search-locations: file:./config-repo,file:/config-repo,classpath:/config-repo
-        health:
-          # We kept the health section enabled but simplified it to avoid I/O hangs
-          enabled: true
-          # Note: Explicit service labels are removed here because 'native' profile
-          # does not have git-style labels like 'master'. Removing them prevents 
-          # unnecessary lookup overhead that leads to timeouts.
+          # Points to the folder in the MicroPay root
+          search-locations: file:./config-repo,file:../config-repo,classpath:/config-repo
 
 management:
   endpoints:
     web:
       exposure:
         include: health, info, prometheus
+  endpoint:
+    health:
+      show-details: always
   metrics:
     tags:
       application: ${spring.application.name}
-      # Setting to 'always' helps you debug if the native repo folder is missing
-      show-details: always
-  info:
-    env:
-      enabled: true
 
 info:
   app:
@@ -53,6 +43,3 @@ logging:
     root: INFO
     org.springframework.cloud.config: DEBUG
     com.micropay: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
-    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
