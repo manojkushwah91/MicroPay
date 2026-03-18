@@ -32,7 +32,7 @@ public class User {
     private String email;
 
     @NotBlank
-    @Size(min = 60, max = 60) // BCrypt hash length
+    @Size(min = 60, max = 100)
     @Column(nullable = false, length = 60)
     private String password;
 

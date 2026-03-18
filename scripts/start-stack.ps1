@@ -25,23 +25,10 @@ $Colors = @{
 }
 
 # Function to print colored output
-function Write-Status {
-    param([string]$Message)
-    Write-Host "[INFO] $Message" -ForegroundColor $Colors.Green
-}
-
-function Write-Warning {
-    param([string]$Message)
-    Write-Host "[WARN] $Message" -ForegroundColor $Colors.Yellow
-}
-
-function Write-Error {
-    param([string]$Message)
-    Write-Host "[ERROR] $Message" -ForegroundColor $Colors.Red
-}
-
-function Write-Header {
-    param([string]$Message)
+function Write-Status([string]$Message) { Write-Host "[INFO] $Message" -ForegroundColor $Colors.Green }
+function Write-Warning([string]$Message) { Write-Host "[WARN] $Message" -ForegroundColor $Colors.Yellow }
+function Write-Error([string]$Message) { Write-Host "[ERROR] $Message" -ForegroundColor $Colors.Red }
+function Write-Header([string]$Message) {
     Write-Host "========================================" -ForegroundColor $Colors.Blue
     Write-Host "$Message" -ForegroundColor $Colors.Blue
     Write-Host "========================================" -ForegroundColor $Colors.Blue
@@ -50,21 +37,19 @@ function Write-Header {
 # Check if Docker is running
 try {
     docker info 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        throw "Docker not running"
-    }
+    if ($LASTEXITCODE -ne 0) { throw "Docker not running" }
 } catch {
     Write-Error "Docker is not running. Please start Docker first."
     exit 1
 }
 
-# Prefer Docker Compose V2 plugin, fallback to standalone docker-compose
-$dockerComposeCmd = $null
-if (docker compose version 2>$null) { $dockerComposeCmd = "docker compose" }
-elseif (Get-Command docker-compose -ErrorAction SilentlyContinue) { $dockerComposeCmd = "docker-compose" }
-else {
-    Write-Error "Docker Compose is not available. Install Docker Compose plugin or standalone docker-compose."
-    exit 1
+# Prefer Docker Compose V2 plugin, fallback to standalone
+$dockerComposeCmd = "docker-compose"
+try {
+    docker compose version 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) { $dockerComposeCmd = "docker compose" }
+} catch {
+    # Stick with docker-compose
 }
 
 # Validate required parameters
@@ -112,7 +97,7 @@ Write-Status "Building and starting all services..."
 Invoke-Expression "$dockerComposeCmd -f docker-compose.prod.yml up -d --build"
 
 if ($LASTEXITCODE -ne 0) {
-    Write-Error "Failed to start services"
+    Write-Error "Failed to start services. Please check Docker logs."
     exit 1
 }
 
@@ -131,7 +116,7 @@ function Wait-Service {
     
     while ([DateTime]::Now -lt $timeout) {
         try {
-            Invoke-Expression $HealthCheckCommand | Out-Null
+            Invoke-Expression $HealthCheckCommand 2>$null | Out-Null
             if ($LASTEXITCODE -eq 0) {
                 Write-Status "$ServiceName is ready!"
                 return $true
@@ -160,22 +145,22 @@ if (-not (Wait-Service "Payment Service" "curl.exe -fs http://localhost:8084/act
 if (-not (Wait-Service "Transaction Service" "curl.exe -fs http://localhost:8085/actuator/health")) { exit 1 }
 if (-not (Wait-Service "Notification Service" "curl.exe -fs http://localhost:8086/actuator/health")) { exit 1 }
 
-Write-Header "MicroPay Stack is Ready! 🎉"
+Write-Header "MicroPay Stack is Ready!"
 
 Write-Host ""
 Write-Status "Service URLs:"
-Write-Host "  🌐 Frontend:            http://localhost"
-Write-Host "  🚪 API Gateway:         http://localhost:8080"
-Write-Host "  🔐 Auth Service:        http://localhost:8081"
-Write-Host "  💳 Wallet Service:      http://localhost:8083"
-Write-Host "  💰 Payment Service:     http://localhost:8084"
-Write-Host "  📊 Transaction Service: http://localhost:8085"
-Write-Host "  📧 Notification Service: http://localhost:8086"
-Write-Host "  🔍 Eureka Server:       http://localhost:8761"
+Write-Host "  Frontend:            http://localhost"
+Write-Host "  API Gateway:         http://localhost:8080"
+Write-Host "  Auth Service:        http://localhost:8081"
+Write-Host "  Wallet Service:      http://localhost:8083"
+Write-Host "  Payment Service:     http://localhost:8084"
+Write-Host "  Transaction Service: http://localhost:8085"
+Write-Host "  Notification Service: http://localhost:8086"
+Write-Host "  Eureka Server:       http://localhost:8761"
 Write-Host ""
-Write-Host "  📈 Prometheus:          http://localhost:9090"
-Write-Host "  📊 Grafana:             http://localhost:3001 (admin/admin)"
-Write-Host "  📨 Kafka:               localhost:9092"
+Write-Host "  Prometheus:          http://localhost:9090"
+Write-Host "  Grafana:             http://localhost:3001 (admin/admin)"
+Write-Host "  Kafka:               localhost:9092"
 Write-Host ""
 
 Write-Status "Health Check Commands:"
@@ -187,12 +172,8 @@ Write-Status "To stop the stack:"
 Write-Host "  $dockerComposeCmd -f docker-compose.prod.yml down"
 Write-Host ""
 
-Write-Status "To view logs:"
-Write-Host "  $dockerComposeCmd -f docker-compose.prod.yml logs -f"
-Write-Host ""
-
 Write-Warning "Make sure all required environment variables are set:"
 Write-Host "  POSTGRES_PASSWORD, JWT_SECRET"
 Write-Host ""
 
-Write-Host "✅ MicroPay stack started successfully!" -ForegroundColor $Colors.Green
+Write-Status "MicroPay stack started successfully!"
