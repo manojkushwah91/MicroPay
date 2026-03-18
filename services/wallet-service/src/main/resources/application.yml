@@ -4,5 +4,5 @@ server:
 spring:
   application:
     name: wallet-service
-config:
+  config:
     import: configserver:http://config-server:8888
