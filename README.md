@@ -1,392 +1,286 @@
-<<<<<<< HEAD
-# 💳 MicroPAY – Digital Wallet & Payment Backend System
+# 💳 MicroPay – Event-Driven Digital Wallet System
 
 ![Java](https://img.shields.io/badge/Java-17-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-brightgreen.svg)
 ![Kafka](https://img.shields.io/badge/Event_Driven-Kafka-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-blue.svg)
+![AWS](https://img.shields.io/badge/AWS-Free_Tier-yellow.svg)
 
-**MicroPAY** is a backend-first, event-driven digital wallet and payment processing platform designed using modern microservices principles. It focuses on **consistency, scalability, and fault tolerance**, mirroring architectural patterns commonly found in real-world fintech systems.
+---
 
-This project intentionally prioritizes **backend complexity over UI**, addressing challenges such as distributed state management, asynchronous workflows, and secure financial transactions.
-=======
-# MicroPay — Cloud-native AWS Free Tier deployment
+## 🚀 Overview
 
-MicroPay is an event-driven microservices system (Spring Boot + Kafka + PostgreSQL) with a React frontend. This repo is upgraded to be **fully deployable on AWS Free Tier** while keeping the backend within a **single `t2.micro` (1GB RAM)** constraint.
+**MicroPay** is a backend-first, cloud-native digital wallet and payment processing system built using **microservices architecture** and **event-driven design**.
 
-## Architecture
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
+It simulates real-world fintech systems by focusing on:
+
+* Distributed transactions
+* Eventual consistency
+* Fault tolerance
+* Scalable service communication
+
+---
+
+## 🧩 Architecture
 
 ```mermaid
 flowchart LR
-  U[User Browser] -->|HTTP 80| N[Nginx reverse proxy]
-  N -->|/| FE[Frontend (Nginx static)]
-  N -->|/api| GW[API Gateway (Spring Cloud Gateway)]
+  U[User] -->|HTTP| N[Nginx]
+  N --> FE[Frontend]
+  N --> GW[API Gateway]
 
-<<<<<<< HEAD
-## 🚀 Key Objectives
-
-* Model real-world fintech backend workflows
-* Demonstrate event-driven microservices using Kafka
-* Ensure transactional integrity across services
-* Apply security best practices for authentication and authorization
-* Enable horizontal scalability and independent service evolution
-=======
-  subgraph Backend (Docker Compose on 1x EC2)
+  subgraph Backend
     GW --> AUTH[auth-service]
     GW --> WAL[wallet-service]
     GW --> PAY[payment-service]
     GW --> TX[transaction-service]
     GW --> NOTIF[notification-service]
-    AUTH --> PG[(PostgreSQL)]
-    WAL --> PG
-    PAY --> PG
-    TX --> PG
-    NOTIF --> PG
-    AUTH <--> K[(Kafka)]
+
+    AUTH --> DB[(PostgreSQL)]
+    WAL --> DB
+    PAY --> DB
+    TX --> DB
+    NOTIF --> DB
+
+    AUTH <--> K[Kafka]
     WAL <--> K
     PAY <--> K
     TX <--> K
     NOTIF <--> K
-    K --> ZK[(ZooKeeper)]
-  end
-
-  subgraph AWS Static Hosting (Optional)
-    CF[CloudFront] --> S3[(S3 Static Website)]
   end
 ```
 
-### Observability & Tooling Overview
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
+---
 
-```mermaid
-flowchart LR
-  subgraph Monitoring
-    P[Prometheus] --> G[Grafana Dashboards]
-  end
+## 🧠 Core Services
 
-<<<<<<< HEAD
-## 🧩 High-Level Architecture
+### 👤 Auth Service
 
-MicroPAY is composed of **loosely coupled domain services**, each owning its data and business logic.
+* User registration & authentication
+* JWT-based security
+* Publishes user events
 
-### Communication Patterns
+### 💼 Wallet Service
 
-* **External traffic:** REST via API Gateway
-* **Internal service communication:** Asynchronous events via Kafka
-* **Service discovery & configuration:** Spring Cloud ecosystem
+* Wallet creation per user
+* Balance management
+* Consumes user/payment events
 
-This hybrid approach ensures:
+### 💸 Payment Service
 
-* Reduced coupling between services
-* Improved resiliency under partial failures
-* Eventual consistency where strict ACID guarantees are impractical
+* Handles wallet-to-wallet payments
+* Business validations
+* Produces payment events
+
+### 📒 Transaction Service
+
+* Maintains transaction ledger
+* Ensures auditability
+
+### 🔔 Notification Service
+
+* Sends notifications (email/SMS-ready)
+* Consumes domain events
+
+### 🌐 API Gateway
+
+* Central entry point
+* Routing + filtering
 
 ---
 
-## 🧠 Core Domain Services
+## 🔁 Event-Driven Communication
 
-### 👤 User Management Service
-
-* User onboarding and identity management
-* JWT-based authentication and authorization
-* Emits domain events for downstream services
-
-### 💼 Wallet Management Service
-
-* Automatic wallet provisioning per user
-* Maintains wallet balances
-* Subscribes to transaction and payment events
-
-### 💸 Transaction Service
-
-* Immutable transaction ledger
-* Tracks transaction lifecycle states
-* Guarantees auditability and traceability
-
-### 🔁 Payment Service
-
-* Validates wallet-to-wallet transfers
-* Enforces balance checks and business rules
-* Coordinates transaction execution via events
-
-### 🏗 Infrastructure Services
-
-* API Gateway (routing, auth filtering)
-* Eureka Service Registry
-* Centralized Configuration Server
+* Apache Kafka used for async communication
+* Shared DTOs via `micropay-events` module
+* Idempotent consumers
+* Eventual consistency model
 
 ---
 
-## 🛠 Technology Stack
+## 🛠 Tech Stack
 
-### Backend & Frameworks
+### Backend
 
 * Java 17
 * Spring Boot
-* Spring Data JPA
 * Spring Security
+* Spring Data JPA
 
-### Microservices Infrastructure
+### Microservices
 
-* Spring Cloud (Eureka, API Gateway, Config Server)
+* Spring Cloud Gateway
+* Eureka (optional)
 
-### Messaging & Events
+### Messaging
 
 * Apache Kafka
-* Event-based state propagation
-* Idempotent consumers and retry handling
 
-### Data Layer
+### Database
 
 * PostgreSQL
 * Database-per-service pattern
-* Strong ownership boundaries
-
-### Security
-
-* JWT authentication
-* Stateless authorization
-* Gateway-level request validation
 
 ### DevOps
 
-* Docker
-* Docker Compose for local orchestration
-* Maven-based builds
-* Git-based version control
-=======
-  subgraph Tracing
-    OTEL[OpenTelemetry SDK] --> ZK[Zipkin/Jaeger (pluggable backend)]
-  end
+* Docker & Docker Compose
+* GitHub Actions (CI/CD)
+* AWS (EC2, S3, CloudFront, ECR)
 
-  GW[API Gateway] -->|/actuator/prometheus| P
-  AUTH[auth-service] -->|metrics| P
-  WAL[wallet-service] -->|metrics| P
-  PAY[payment-service] -->|metrics| P
-  TX[transaction-service] -->|metrics| P
-  NOTIF[notification-service] -->|metrics| P
+---
 
-  AUTH -.trace.-> OTEL
-  WAL  -.trace.-> OTEL
-  PAY  -.trace.-> OTEL
-  TX   -.trace.-> OTEL
-  NOTIF -.trace.-> OTEL
+## 📂 Project Structure
+
+```
+MicroPay
+├── micropay-events        # Shared event DTOs
+├── auth-service
+├── wallet-service
+├── payment-service
+├── transaction-service
+├── notification-service
+├── api-gateway
+├── infrastructure
+│   ├── docker
+│   └── terraform
+├── tests
+└── README.md
 ```
 
-### API Documentation
+---
 
-- **OpenAPI / Swagger UI** is enabled for all core domain services:
-  - Auth: `http://localhost:8081/swagger-ui.html`
-  - Wallet: `http://localhost:8083/swagger-ui.html`
-  - Payment: `http://localhost:8084/swagger-ui.html`
-  - Transaction: `http://localhost:8085/swagger-ui.html`
-  - Notification: `http://localhost:8086/swagger-ui.html`
+## ⚙️ Local Setup
 
-Swagger UIs are available locally when running the services via Docker Compose or directly via Maven.
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
-
-### Metrics & Dashboards
-
-<<<<<<< HEAD
-## 🤖 AI-Assisted Development Workflow
-
-This project was built using an **AI-augmented engineering approach** to increase development velocity while maintaining high code quality.
-
-### How AI Was Used
-
-* Microservice scaffolding and boilerplate generation
-* JPA entity modeling and repository creation
-* Unit and integration test generation
-* Refactoring Kafka consumer logic
-* Faster debugging of cross-service failures and configuration issues
-
-AI acted as a **pair programmer**, with all architectural and design decisions validated manually.
-=======
-- All Spring Boot services expose **Prometheus metrics** at `/actuator/prometheus`.
-- `infrastructure/docker/prometheus.yml` scrapes:
-  - `auth-service`, `wallet-service`, `payment-service`, `transaction-service`, `notification-service`
-  - (Gateway can be extended in the same way if desired.)
-- `docker-compose.prod.yml` includes:
-  - `prometheus` (port `9090`)
-  - `grafana` (port `3001`, default `admin/admin`)
-
-To explore dashboards:
+### 1. Clone repository
 
 ```bash
-cd infrastructure/docker
-docker compose -f docker-compose.prod.yml --env-file ../../.env up -d --build
-# then open:
-# - http://localhost:9090  (Prometheus)
-# - http://localhost:3001  (Grafana)
+git clone https://github.com/your-username/micropay.git
+cd micropay
 ```
 
-### API Smoke Tests & Load Tests
-
-- **HTTP smoke tests** (curl-style) live in `tests/smoke/api-smoke.test.http`.
-  - Can be executed with REST Client plugins or imported into Postman.
-- **k6 load script** in `tests/load/k6-smoke.js`:
-
-```bash
-k6 run tests/load/k6-smoke.js \
-  -e BASE_URL=http://localhost \
-  -e K6_EMAIL=portfolio-user@example.com \
-  -e K6_PASSWORD=Password123!
-```
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
-
-
-<<<<<<< HEAD
-## 📂 Repository Structure
-
-```text
-📦 micropay-backend
- ┣ 📂 docs
- ┃ ┗ Architecture diagrams, API specs, and flow documentation
- ┣ 📂 frontend
- ┃ ┗ Minimal UI for interacting with backend APIs
- ┣ 📂 infrastructure
- ┃ ┗ Config Server, Eureka, API Gateway
- ┣ 📂 services
- ┃ ┣ user-service
- ┃ ┣ wallet-service
- ┃ ┣ transaction-service
- ┃ ┗ payment-service
- ┣ 📜 docker-compose.yml
- ┣ 📜 README.md
- ┗ 📜 DEPLOYMENT_FINAL.md
-```
-=======
-## What’s included (production-ready files)
-
-- **Optimized Dockerfiles** for Spring services (Java 17, multi-stage Maven build, slim runtime, `JAVA_OPTS="-Xms128m -Xmx256m"`).
-- **`docker-compose.prod.yml`**: single network, healthchecks, restart policies, lightweight Kafka tuning, Postgres volume, dependency order, and **Nginx reverse proxy**.
-- **Terraform (AWS)**:
-  - EC2 `t2.micro` (Amazon Linux 2023) + Security Group + 20GB EBS
-  - ECR repositories for all images
-  - S3 static website + CloudFront distribution for frontend
-- **GitHub Actions CI/CD**:
-  - Build services and Docker images
-  - Push images to ECR
-  - SSH deploy to EC2 and restart Docker Compose
-  - Optional frontend deploy to S3 + CloudFront invalidation
-- **`.env.example`**: production environment template.
-- **Spring `prod` profiles** for all runtime services: disables config/eureka, uses direct service URLs, reduces DB pool sizes, and uses structured console logging.
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
-
-## Local: run production compose
-
-<<<<<<< HEAD
-## 🧪 Reliability & Consistency Guarantees
-
-* Event-driven workflows with eventual consistency
-* Idempotent Kafka consumers
-* Explicit transaction boundaries per service
-* Clear separation of command execution and state propagation
-=======
-1. Copy environment file:
+### 2. Setup environment
 
 ```bash
 cp .env.example .env
 ```
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
 
-2. Start production stack:
+### 3. Run using Docker
 
-<<<<<<< HEAD
-## 📦 Running Locally
-
-```bash
-docker-compose up --build
-```
-
-All services, Kafka brokers, and databases will be started locally using Docker Compose.
-=======
 ```bash
 cd infrastructure/docker
 docker compose -f docker-compose.prod.yml --env-file ../../.env up -d --build
 ```
 
-3. Open:
-- `http://localhost/` (frontend via Nginx)
-- `http://localhost/api/actuator/health` (gateway health)
+### 4. Access services
 
-## AWS: provisioning with Terraform
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
+* Frontend: [http://localhost](http://localhost)
+* API Gateway: [http://localhost/api](http://localhost/api)
+* Health Check: [http://localhost/api/actuator/health](http://localhost/api/actuator/health)
 
-### Prerequisites
-- Terraform \(>= 1.5\)
-- AWS account (Free Tier)
-- An EC2 Key Pair name (for SSH)
+---
 
-<<<<<<< HEAD
-## 📘 Documentation
+## 📊 Observability
 
-* `docs/` – Architecture diagrams and service contracts
-* `DEPLOYMENT_FINAL.md` – Production deployment notes
-* OpenAPI specifications available per service
-=======
-### Deploy infrastructure
+* Prometheus: [http://localhost:9090](http://localhost:9090)
+* Grafana: [http://localhost:3001](http://localhost:3001)
+
+All services expose:
+
+```
+/actuator/prometheus
+```
+
+---
+
+## 📄 API Documentation
+
+Swagger UI available per service:
+
+* Auth: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+* Wallet: [http://localhost:8083/swagger-ui.html](http://localhost:8083/swagger-ui.html)
+* Payment: [http://localhost:8084/swagger-ui.html](http://localhost:8084/swagger-ui.html)
+* Transaction: [http://localhost:8085/swagger-ui.html](http://localhost:8085/swagger-ui.html)
+* Notification: [http://localhost:8086/swagger-ui.html](http://localhost:8086/swagger-ui.html)
+
+---
+
+## 🧪 Testing
+
+### Smoke Tests
+
+```
+tests/smoke/api-smoke.test.http
+```
+
+### Load Testing (k6)
+
+```bash
+k6 run tests/load/k6-smoke.js
+```
+
+---
+
+## ☁️ AWS Deployment (Free Tier)
+
+### Infrastructure
+
+* EC2 (t2.micro)
+* Docker Compose deployment
+* S3 + CloudFront (frontend)
+* ECR (container registry)
+
+### Deploy using Terraform
 
 ```bash
 cd infrastructure/terraform
-cp terraform.tfvars.example terraform.tfvars
 terraform init
 terraform apply
 ```
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
 
-Terraform outputs:
-- **EC2 public IP/DNS**
-- **ECR repo URLs**
-- **S3 bucket + CloudFront domain** (frontend)
+---
 
-<<<<<<< HEAD
-## 🧠 Final Notes
+## 🔐 Security
 
-MicroPAY is designed to surface the **hard parts of backend engineering**—distributed transactions, event orchestration, and service autonomy—while remaining readable, testable, and extensible.
-=======
-## AWS: deploy backend (EC2 Docker Compose)
+* JWT-based authentication
+* Stateless services
+* Gateway-level validation
 
-On the EC2 instance, the project is deployed into `/opt/micropay` using `infrastructure/docker/docker-compose.prod.yml`.
+---
 
-- **Ports**: 80 (Nginx), 8080 (Gateway direct), 22 (SSH). 443 is opened for future TLS.
+## ⚠️ Important Notes
 
-## CI/CD: GitHub Actions
+* All shared events are centralized in `micropay-events`
+* No DTO duplication across services
+* BOOT-INF should NOT exist in source
+* Each service owns its database schema
 
-Workflow: `.github/workflows/deploy.yml` (runs on push to `main`)
+---
 
-### Required GitHub Secrets
+## 🧠 Key Learnings
 
-- `AWS_REGION`
-- `AWS_ACCOUNT_ID`
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- `EC2_HOST` (public IP/DNS)
-- `EC2_USER` (usually `ec2-user`)
-- `EC2_SSH_PRIVATE_KEY` (private key for the EC2 keypair)
-- `JWT_SECRET`
-- `POSTGRES_PASSWORD`
+* Microservices communication patterns
+* Event-driven architecture
+* Distributed system design
+* CI/CD pipelines
+* Cloud deployment (AWS Free Tier)
 
-Optional (frontend S3/CloudFront deploy job):
-- `FRONTEND_S3_BUCKET` (Terraform output `frontend_s3_bucket`)
-- `CLOUDFRONT_DISTRIBUTION_ID` (CloudFront distribution id)
-- `FRONTEND_API_BASE_URL` (e.g. `http://<EC2_PUBLIC_IP>/api`)
+---
 
-## Memory & Free Tier notes (1GB RAM)
+## 🚀 Future Improvements
 
-- **JVM**: containers default to `JAVA_OPTS="-Xms128m -Xmx256m"`.
-- **Kafka/ZooKeeper**: tuned heap sizes and small retention.
-- **DB pools**: prod profiles reduce Hikari pools \(max 4\).
+* Add Redis caching
+* Implement circuit breakers (Resilience4j)
+* Add distributed tracing (Zipkin/Jaeger)
+* Kubernetes deployment
 
-If the EC2 instance OOMs, reduce concurrency (fewer requests), and consider lowering heap for the least critical services (keeping within your constraints).
+---
 
-## Repo paths you’ll use most
+## 👨‍💻 Author
 
-- `infrastructure/docker/docker-compose.prod.yml`
-- `infrastructure/docker/nginx/nginx.conf`
-- `infrastructure/terraform/`
-- `.github/workflows/deploy.yml`
-- `.env.example`
+Manoj Kushwah
 
->>>>>>> 88e6a02 (feat: update frontend API integrations, workflows, and system documentation)
+---
+
+## ⭐ If you like this project
+
+Give it a star ⭐ on GitHub!

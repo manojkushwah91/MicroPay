@@ -2,9 +2,11 @@ package com.micropay.gateway.exception;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.reactive.error.ErrorWebExceptionHandler;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.server.ResponseStatusException;
@@ -16,11 +18,16 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @Configuration
 @Order(-2)
 public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    public GlobalGatewayExceptionHandler(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public Mono<Void> handle(ServerWebExchange exchange, Throwable ex) {
@@ -31,10 +38,15 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
             status = HttpStatus.valueOf(rse.getStatusCode().value());
         }
 
+        // 🔥 Log the error
+        log.error("Gateway Exception: ", ex);
+
         Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
+        body.put("timestamp", LocalDateTime.now().toString());
         body.put("status", status.value());
-        body.put("message", ex.getMessage());
+        body.put("error", status.getReasonPhrase());
+        body.put("message", ex.getMessage() != null ? ex.getMessage() : "Unexpected error");
+        body.put("path", exchange.getRequest().getURI().getPath());
 
         byte[] bytes;
         try {
@@ -46,9 +58,10 @@ public class GlobalGatewayExceptionHandler implements ErrorWebExceptionHandler {
         exchange.getResponse().setStatusCode(status);
         exchange.getResponse().getHeaders().setContentType(MediaType.APPLICATION_JSON);
 
-        return exchange.getResponse()
-                .writeWith(Mono.just(exchange.getResponse()
-                        .bufferFactory()
-                        .wrap(bytes)));
+        DataBuffer buffer = exchange.getResponse()
+                .bufferFactory()
+                .wrap(bytes);
+
+        return exchange.getResponse().writeWith(Mono.just(buffer));
     }
 }

@@ -14,6 +14,8 @@ public class RouteValidator {
             "/api/auth/login",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
+            "/api/auth/test",
+            "/actuator",
             "/eureka"
     );
 
