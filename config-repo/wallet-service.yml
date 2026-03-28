@@ -47,16 +47,22 @@ eureka:
     lease-expiration-duration-in-seconds: 90
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
   endpoints:
     web:
       exposure:
         include: health,info,metrics,prometheus
+
   endpoint:
     health:
       show-details: when-authorized
-  info:
-    env:
-      enabled: true
 
 info:
   app:

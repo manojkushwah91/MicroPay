@@ -40,6 +40,7 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BROKER:-kafka:29092}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
       SERVER_PORT: "8082"
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     depends_on:
       postgres:
         condition: service_healthy
@@ -106,9 +107,9 @@ services:
       - micropay-network
     healthcheck:
       test: ["CMD", "kafka-topics", "--bootstrap-server", "127.0.0.1:9092", "--list"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
+      interval: 30s
+      timeout: 10s
+      retries: 5
       start_period: 45s
     restart: unless-stopped
 
@@ -196,6 +197,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: native
       SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS: file:/config-repo
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     volumes:
       - ../../config-repo:/config-repo
     networks:
@@ -223,7 +225,9 @@ services:
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
-
+      EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -262,6 +266,7 @@ services:
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     depends_on:
       postgres:
         condition: service_healthy
@@ -298,6 +303,7 @@ services:
       WALLET_DB_URL: ${WALLET_DB_URL:-jdbc:postgresql://postgres:5432/micropay_wallet_db}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BROKER:-kafka:29092}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     depends_on:
       postgres:
         condition: service_healthy
@@ -334,6 +340,7 @@ services:
       PAYMENT_DB_URL: ${PAYMENT_DB_URL:-jdbc:postgresql://postgres:5432/micropay_payment_db}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BROKER:-kafka:29092}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     depends_on:
       postgres:
         condition: service_healthy
@@ -370,6 +377,7 @@ services:
       TRANSACTION_DB_URL: ${TRANSACTION_DB_URL:-jdbc:postgresql://postgres:5432/micropay_transaction_db}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BROKER:-kafka:29092}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     depends_on:
       postgres:
         condition: service_healthy
@@ -406,6 +414,7 @@ services:
       NOTIFICATION_DB_URL: ${NOTIFICATION_DB_URL:-jdbc:postgresql://postgres:5432/micropay_notification_db}
       SPRING_KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BROKER:-kafka:29092}
       EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE: http://eureka-server:8761/eureka
+      MANAGEMENT_ZIPKIN_TRACING_ENDPOINT: http://zipkin:9411/api/v2/spans # <-- ADDED ZIPKIN
     depends_on:
       postgres:
         condition: service_healthy
@@ -486,6 +495,16 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - micropay-network
+    restart: unless-stopped
+
+  # --- BRAND NEW ZIPKIN CONTAINER ---
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: micropay-zipkin
+    ports:
+      - "9411:9411"
     networks:
       - micropay-network
     restart: unless-stopped

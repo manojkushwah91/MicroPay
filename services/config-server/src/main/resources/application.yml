@@ -21,13 +21,22 @@ spring:
           search-locations: file:./config-repo,file:../config-repo,classpath:/config-repo
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
   endpoints:
     web:
       exposure:
-        include: health, info, prometheus
+        include: health,info,metrics,prometheus
+
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
   metrics:
     tags:
       application: ${spring.application.name}

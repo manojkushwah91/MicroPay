@@ -85,6 +85,12 @@
       <artifactId>spring-security-test</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+    </dependency>
+    
     <!-- Spring Redis -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

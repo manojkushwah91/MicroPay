@@ -5,6 +5,11 @@ spring:
   application:
     name: api-gateway
 
+  autoconfigure:
+    exclude: 
+      - org.springframework.boot.autoconfigure.security.reactive.ReactiveUserDetailsServiceAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
   data:
     redis:
       host: redis
@@ -14,6 +19,8 @@ spring:
     gateway:
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials
+      redis-rate-limiter:
+        enabled: false
 
       globalcors:
         corsConfigurations:
@@ -72,14 +79,24 @@ eureka:
     lease-expiration-duration-in-seconds: 90
 
 management:
+  tracing:
+    sampling:
+      probability: 1.0
+
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        include: health,info,metrics,prometheus,gateway
 
   endpoint:
+    gateway:
+      enabled: true
     health:
-      show-details: always
+      show-details: when-authorized
 
 logging:
   level:

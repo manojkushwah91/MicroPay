@@ -15,12 +15,13 @@ public class UserEventConsumer {
 
     private final NotificationPreferenceRepository preferenceRepository;
 
-    @KafkaListener(topics = "user-created", groupId = "user-service-group")
+    @KafkaListener(topics = "user.created", groupId = "user-service-group")
     public void handleUserCreated(UserCreatedEvent event) {
         log.info("Received user creation event for: {}", event.getEmail());
         
         NotificationPreference prefs = new NotificationPreference();
         prefs.setUserId(event.getUserId());
+        prefs.setNotificationType("GENERAL");
         prefs.setEmailEnabled(true);
         prefs.setSmsEnabled(false);
         prefs.setPushEnabled(true);

@@ -9,6 +9,7 @@ import com.micropay.wallet.exception.WalletNotFoundException;
 import com.micropay.wallet.model.Wallet;
 import com.micropay.wallet.model.WalletStatus;
 import com.micropay.wallet.repository.WalletRepository;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -52,7 +53,11 @@ public class WalletService {
      */
     public WalletResponse getWalletByUserId(UUID userId) {
         Wallet wallet = walletRepository.findByUserId(userId)
-            .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user: " + userId));
+            .orElseGet(() -> {
+                // Fallback for eventual-consistency: wallet may not be created yet by Kafka consumer.
+                logger.warn("Wallet not found for user: {}. Auto-creating wallet.", userId);
+                return createWallet(userId, "USD");
+            });
         
         return mapToResponse(wallet);
     }
@@ -62,16 +67,22 @@ public class WalletService {
      */
     @Transactional
     public Wallet createWallet(UUID userId, String currency) {
-        if (walletRepository.existsByUserId(userId)) {
-            logger.warn("Wallet already exists for user: {}", userId);
-            return walletRepository.findByUserId(userId)
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user: " + userId));
-        }
+        String effectiveCurrency = currency != null ? currency : "USD";
 
-        Wallet wallet = new Wallet(userId, BigDecimal.ZERO, currency != null ? currency : "USD");
-        wallet = walletRepository.save(wallet);
-        logger.info("Created wallet for user: {} with ID: {}", userId, wallet.getId());
-        return wallet;
+        // Idempotent wallet creation (unique(user_id) + concurrent consumer safety)
+        return walletRepository.findByUserId(userId)
+            .orElseGet(() -> {
+                Wallet wallet = new Wallet(userId, BigDecimal.ZERO, effectiveCurrency);
+                try {
+                    Wallet saved = walletRepository.save(wallet);
+                    logger.info("Created wallet for user: {} with ID: {}", userId, saved.getId());
+                    return saved;
+                } catch (DataIntegrityViolationException e) {
+                    logger.warn("Wallet creation race detected for user: {}. Re-fetching existing wallet.", userId);
+                    return walletRepository.findByUserId(userId)
+                        .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user after concurrent create: " + userId));
+                }
+            });
     }
 
     /**
@@ -80,7 +91,12 @@ public class WalletService {
     @Transactional
     public WalletResponse creditWallet(UUID userId, BigDecimal amount, String transactionId) {
         Wallet wallet = walletRepository.findByUserIdWithLock(userId)
-            .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user: " + userId));
+            .orElseGet(() -> {
+                logger.warn("Wallet not found for credit for user: {}. Auto-creating wallet.", userId);
+                createWallet(userId, "USD");
+                return walletRepository.findByUserIdWithLock(userId)
+                    .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user after auto-create: " + userId));
+            });
 
         if (wallet.getStatus() != WalletStatus.ACTIVE) {
             throw new IllegalStateException("Wallet is not active. Current status: " + wallet.getStatus());
@@ -106,7 +122,12 @@ public class WalletService {
     @Transactional
     public WalletResponse debitWallet(UUID userId, BigDecimal amount, String transactionId) {
         Wallet wallet = walletRepository.findByUserIdWithLock(userId)
-            .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user: " + userId));
+            .orElseGet(() -> {
+                logger.warn("Wallet not found for debit for user: {}. Auto-creating wallet.", userId);
+                createWallet(userId, "USD");
+                return walletRepository.findByUserIdWithLock(userId)
+                    .orElseThrow(() -> new WalletNotFoundException("Wallet not found for user after auto-create: " + userId));
+            });
 
         if (wallet.getStatus() != WalletStatus.ACTIVE) {
             throw new IllegalStateException("Wallet is not active. Current status: " + wallet.getStatus());
