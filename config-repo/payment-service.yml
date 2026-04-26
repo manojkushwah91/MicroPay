@@ -19,7 +19,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
@@ -31,7 +31,6 @@ spring:
         order_updates: true
 
   kafka:
-    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS}
     consumer:
       group-id: payment-service-consumer-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer

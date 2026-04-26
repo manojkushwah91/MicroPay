@@ -5,6 +5,7 @@ import com.micropay.wallet.dto.DebitRequest;
 import com.micropay.wallet.dto.WalletResponse;
 import com.micropay.wallet.service.WalletService;
 import com.micropay.wallet.dto.TopUpRequest;
+import com.micropay.wallet.exception.WalletServiceException;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,8 +44,13 @@ public class WalletController {
     @GetMapping("/{userId}")
     public ResponseEntity<WalletResponse> getWallet(@PathVariable UUID userId) {
         logger.info("Fetching wallet for user: {}", userId);
-        WalletResponse wallet = walletService.getWalletByUserId(userId);
-        return ResponseEntity.ok(wallet);
+        try {
+            WalletResponse wallet = walletService.getWalletByUserId(userId);
+            return ResponseEntity.ok(wallet);
+        } catch (Exception e) {
+            logger.error("Error fetching wallet for user: {}", userId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     /**

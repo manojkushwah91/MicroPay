@@ -24,10 +24,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.*;
 
 class AuthServiceTest {
@@ -57,6 +60,10 @@ class AuthServiceTest {
     @Test
     @DisplayName("register creates user, publishes event and returns JWT")
     void register_success() {
+        // Mock KafkaTemplate.send() to return completed future
+        lenient().when(kafkaTemplate.send(anyString(), any(), any()))
+                 .thenReturn(CompletableFuture.completedFuture(null));
+        
         RegisterRequest req = new RegisterRequest();
         req.setEmail("test@example.com");
         req.setPassword("secret");
@@ -79,6 +86,7 @@ class AuthServiceTest {
         saved.setCreatedAt(LocalDateTime.now());
 
         when(userRepository.save(any(User.class))).thenReturn(saved);
+        when(userRepository.findByEmail(req.getEmail())).thenReturn(Optional.of(saved));
         when(jwtService.generateToken(any(UserDetails.class))).thenReturn("jwt-token");
 
         AuthResponse resp = authService.register(req);

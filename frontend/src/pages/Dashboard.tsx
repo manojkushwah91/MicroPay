@@ -37,7 +37,8 @@ export default function Dashboard() {
         setWallet(walletData);
         setTransactions(transactionsData.slice(0, 5)); // Show only recent 5
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to load dashboard data');
+        const userFriendlyMessage = err.userFriendlyMessage || err.response?.data?.userFriendlyMessage || 'Failed to load dashboard data';
+        setError(userFriendlyMessage);
       } finally {
         setIsLoading(false);
       }

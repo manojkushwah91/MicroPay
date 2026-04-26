@@ -17,7 +17,6 @@ spring:
       enabled: false 
       server:
         native:
-          # Points to the folder in the MicroPay root
           search-locations: file:./config-repo,file:../config-repo,classpath:/config-repo
 
 management:

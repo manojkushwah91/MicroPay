@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
-import type { RegisterRequest, ApiError } from '../types';
+import type { RegisterRequest } from '../types';
 
 export default function Register() {
   const navigate = useNavigate();
@@ -57,8 +57,8 @@ export default function Register() {
       localStorage.setItem('userId', response.userId);
       navigate('/dashboard');
     } catch (err: any) {
-      const apiError = err.response?.data as ApiError;
-      setError(apiError?.message || 'Registration failed. Please try again.');
+      const userFriendlyMessage = err.userFriendlyMessage || err.response?.data?.userFriendlyMessage || 'Registration failed. Please try again.';
+      setError(userFriendlyMessage);
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +100,7 @@ export default function Register() {
                   className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                     errors.firstName ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                  placeholder="First name"
+                  placeholder="John"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
@@ -120,7 +120,7 @@ export default function Register() {
                   className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                     errors.lastName ? 'border-red-300' : 'border-gray-300'
                   } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                  placeholder="Last name"
+                  placeholder="Doe"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
@@ -142,7 +142,7 @@ export default function Register() {
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                   errors.email ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                placeholder="Email address"
+                placeholder="john.doe@example.com"
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
             </div>
@@ -161,7 +161,7 @@ export default function Register() {
                 className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
                   errors.password ? 'border-red-300' : 'border-gray-300'
                 } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm`}
-                placeholder="Password"
+                placeholder="••••••••"
               />
               {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
             </div>

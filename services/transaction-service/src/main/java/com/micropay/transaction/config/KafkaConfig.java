@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 // 2. Spring Framework Imports
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,9 +54,26 @@ public class KafkaConfig {
     /**
      * Kafka Template for producing events
      */
-    @Bean
+    @Bean("transactionRecordedKafkaTemplate")
     public KafkaTemplate<String, TransactionRecordedEvent> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+    
+    /**
+     * Generic Kafka Template for producing any event type
+     */
+    @Bean("genericKafkaTemplate")
+    public KafkaTemplate<String, Object> genericKafkaTemplate() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
+        configProps.put(ProducerConfig.RETRIES_CONFIG, 3);
+        configProps.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, true);
+        
+        ProducerFactory<String, Object> producerFactory = new DefaultKafkaProducerFactory<>(configProps);
+        return new KafkaTemplate<>(producerFactory);
     }
 
     /**

@@ -23,24 +23,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
-            // Disable CSRF (stateless REST API)
             .csrf(AbstractHttpConfigurer::disable)
+            .httpBasic(AbstractHttpConfigurer::disable)
+            .formLogin(AbstractHttpConfigurer::disable)
 
-            // NO CORS HERE (Gateway handles it)
-            // .cors()  <-- DO NOT ADD
-
-            // Stateless session
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // Authorization rules
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/auth/**",
-                    "/api/auth/**",
-                    "/actuator/**"
-                ).permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll() // CRITICAL FOR HEALTHCHECKS
                 .anyRequest().authenticated()
             );
 
@@ -53,10 +46,14 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(@Lazy UserDetailsService userDetailsService, PasswordEncoder passwordEncoder) {
+    public AuthenticationManager authenticationManager(
+            @Lazy UserDetailsService userDetailsService,
+            PasswordEncoder passwordEncoder) {
+
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder);
+
         return new ProviderManager(provider);
     }
 }

@@ -1,0 +1,81 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    config:
+      enabled: false
+      import-check:
+        enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      routes:
+        - id: auth-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth/(?<segment>.*), /api/auth/${segment}
+        - id: user-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - SetPath=/users
+            - AuthenticationFilter
+        - id: wallet-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/wallet/**
+          filters:
+            - RewritePath=/api/wallet/(?<segment>.*), /wallet/${segment}
+        - id: payment-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/payment/**
+          filters:
+            - RewritePath=/api/payment, /payment
+            - RewritePath=/api/(?<segment>.*), /${segment}
+            - RewritePath=/api/payment/(?<segment>.*), /payment/${segment}
+            - AuthenticationFilter
+        - id: transaction-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/transactions/**, /api/transaction/**
+          filters:
+            - RewritePath=/api/(?<service>transactions|transaction)/(?<segment>.*), /transactions/${segment}
+            - AuthenticationFilter
+        - id: notification-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - RewritePath=/api/notifications/(?<segment>.*), /notifications/${segment}
+            - AuthenticationFilter
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 10s
+      httpserver:
+        connect-timeout: 5000
+
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+jwt:
+  secret: test-secret-key-for-testing-only-long-enough-to-be-secure
+  expiration: 86400000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    org.springframework.http.codec.json: DEBUG

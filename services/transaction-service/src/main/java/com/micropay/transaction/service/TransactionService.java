@@ -3,6 +3,8 @@ package com.micropay.transaction.service;
 import com.micropay.transaction.dto.PaymentCompletedEvent;
 import com.micropay.transaction.dto.TransactionRecordedEvent;
 import com.micropay.transaction.dto.TransactionResponse;
+import com.micropay.transaction.dto.TransferRequest;
+import com.micropay.transaction.dto.TransactionInitiatedEvent;
 import com.micropay.transaction.exception.TransactionNotFoundException;
 import com.micropay.transaction.exception.TransactionProcessingException;
 import com.micropay.transaction.model.Transaction;
@@ -12,10 +14,15 @@ import com.micropay.transaction.model.TransactionStatus;
 import com.micropay.transaction.repository.TransactionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,14 +36,18 @@ public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
     
     private static final String TRANSACTION_RECORDED_TOPIC = "transaction.recorded";
+    private static final String TRANSACTION_INITIATED_TOPIC = "transaction.initiated";
 
     private final TransactionRepository transactionRepository;
-    private final KafkaTemplate<String, TransactionRecordedEvent> kafkaTemplate;
+    private final KafkaTemplate<String, Object> genericKafkaTemplate;
+    private final WebClient webClient;
 
     public TransactionService(TransactionRepository transactionRepository, 
-                            KafkaTemplate<String, TransactionRecordedEvent> kafkaTemplate) {
+                            @Qualifier("genericKafkaTemplate") KafkaTemplate<String, Object> genericKafkaTemplate,
+                            WebClient webClient) {
         this.transactionRepository = transactionRepository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.genericKafkaTemplate = genericKafkaTemplate;
+        this.webClient = webClient;
     }
 
     /**
@@ -138,7 +149,7 @@ public class TransactionService {
                 entryDtos
             );
 
-            kafkaTemplate.send(TRANSACTION_RECORDED_TOPIC, transaction.getTransactionId().toString(), event);
+            genericKafkaTemplate.send(TRANSACTION_RECORDED_TOPIC, transaction.getTransactionId().toString(), event);
             logger.debug("Published transaction.recorded event for transaction: {}", transaction.getTransactionId());
         } catch (Exception e) {
             logger.error("Failed to publish transaction.recorded event for transaction: {}", 
@@ -178,6 +189,152 @@ public class TransactionService {
         response.setEntries(entryResponses);
 
         return response;
+    }
+    
+    /**
+     * Initiate a money transfer
+     */
+    @Transactional
+    public TransactionResponse initiateTransfer(TransferRequest request) {
+        logger.info("Initiating transfer from {} to {} for amount: {}", 
+                   request.getFromUserId(), request.getToUserId(), request.getAmount());
+        
+        try {
+            // Step 1: Verify funds with payment-service
+            VerifyFundsResponse fundsResponse = verifyFunds(request.getFromUserId(), request.getAmount(), request.getCurrency());
+            
+            if (!fundsResponse.isSufficient()) {
+                throw new TransactionProcessingException("Insufficient funds for transfer");
+            }
+            
+            // Step 2: Create transaction record
+            Transaction transaction = new Transaction();
+            transaction.setTransactionId(UUID.randomUUID());
+            transaction.setPaymentId(UUID.randomUUID()); // Generate a payment ID for tracking
+            transaction.setStatus(TransactionStatus.PENDING);
+            transaction.setFailureReason(request.getDescription()); // Store description in failureReason for now
+            
+            transaction = transactionRepository.save(transaction);
+            
+            // Step 3: Create transaction entries
+            createTransactionEntries(transaction, request);
+            
+            // Step 4: Publish TransactionInitiatedEvent
+            publishTransactionInitiatedEvent(transaction, request);
+            
+            logger.info("Transfer initiated successfully: {}", transaction.getTransactionId());
+            
+            return mapToResponse(transaction);
+            
+        } catch (Exception e) {
+            logger.error("Error initiating transfer", e);
+            throw new TransactionProcessingException("Failed to initiate transfer: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Verify funds with payment-service
+     */
+    private VerifyFundsResponse verifyFunds(UUID userId, BigDecimal amount, String currency) {
+        try {
+            Mono<VerifyFundsResponse> responseMono = webClient.post()
+                    .uri("/payment/verify-funds")
+                    .bodyValue(new VerifyFundsRequest(userId, amount, currency))
+                    .retrieve()
+                    .bodyToMono(VerifyFundsResponse.class);
+            
+            return responseMono.block();
+        } catch (Exception e) {
+            logger.error("Error verifying funds for user: {}", userId, e);
+            throw new TransactionProcessingException("Failed to verify funds", e);
+        }
+    }
+    
+    /**
+     * Create debit and credit entries for the transaction
+     */
+    private void createTransactionEntries(Transaction transaction, TransferRequest request) {
+        // Debit entry for sender
+        TransactionEntry debitEntry = new TransactionEntry();
+        debitEntry.setTransaction(transaction);
+        debitEntry.setUserId(request.getFromUserId());
+        debitEntry.setEntryType(TransactionEntryType.DEBIT);
+        debitEntry.setAmount(request.getAmount());
+        debitEntry.setCurrency(request.getCurrency());
+        
+        // Credit entry for receiver
+        TransactionEntry creditEntry = new TransactionEntry();
+        creditEntry.setTransaction(transaction);
+        creditEntry.setUserId(request.getToUserId());
+        creditEntry.setEntryType(TransactionEntryType.CREDIT);
+        creditEntry.setAmount(request.getAmount());
+        creditEntry.setCurrency(request.getCurrency());
+        
+        transaction.getEntries().add(debitEntry);
+        transaction.getEntries().add(creditEntry);
+    }
+    
+    /**
+     * Publish TransactionInitiatedEvent to Kafka
+     */
+    private void publishTransactionInitiatedEvent(Transaction transaction, TransferRequest request) {
+        try {
+            TransactionInitiatedEvent event = new TransactionInitiatedEvent(
+                transaction.getTransactionId(),
+                request.getFromUserId(),
+                request.getToUserId(),
+                request.getAmount(),
+                request.getCurrency(),
+                request.getDescription(),
+                transaction.getStatus().name()
+            );
+            
+            genericKafkaTemplate.send(TRANSACTION_INITIATED_TOPIC, transaction.getTransactionId().toString(), event);
+            logger.info("Published transaction.initiated event for transaction: {}", transaction.getTransactionId());
+        } catch (Exception e) {
+            logger.error("Failed to publish transaction.initiated event for transaction: {}", 
+                        transaction.getTransactionId(), e);
+        }
+    }
+    
+    /**
+     * DTOs for service communication
+     */
+    public static class VerifyFundsRequest {
+        private UUID userId;
+        private BigDecimal amount;
+        private String currency;
+        
+        public VerifyFundsRequest() {}
+        
+        public VerifyFundsRequest(UUID userId, BigDecimal amount, String currency) {
+            this.userId = userId;
+            this.amount = amount;
+            this.currency = currency;
+        }
+        
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
+        public BigDecimal getAmount() { return amount; }
+        public void setAmount(BigDecimal amount) { this.amount = amount; }
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
+    }
+    
+    public static class VerifyFundsResponse {
+        private boolean sufficient;
+        private BigDecimal availableBalance;
+        private BigDecimal requestedAmount;
+        private String currency;
+        
+        public boolean isSufficient() { return sufficient; }
+        public void setSufficient(boolean sufficient) { this.sufficient = sufficient; }
+        public BigDecimal getAvailableBalance() { return availableBalance; }
+        public void setAvailableBalance(BigDecimal availableBalance) { this.availableBalance = availableBalance; }
+        public BigDecimal getRequestedAmount() { return requestedAmount; }
+        public void setRequestedAmount(BigDecimal requestedAmount) { this.requestedAmount = requestedAmount; }
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
     }
 }
 

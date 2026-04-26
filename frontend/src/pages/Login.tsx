@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authService } from '../services/authService';
-import type { LoginRequest, ApiError } from '../types';
+import type { LoginRequest } from '../types';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -47,8 +47,8 @@ export default function Login() {
       localStorage.setItem('userId', response.userId);
       navigate('/dashboard');
     } catch (err: any) {
-      const apiError = err.response?.data as ApiError;
-      setError(apiError?.message || 'Login failed. Please try again.');
+      const userFriendlyMessage = err.userFriendlyMessage || err.response?.data?.userFriendlyMessage || 'Login failed. Please try again.';
+      setError(userFriendlyMessage);
     } finally {
       setIsLoading(false);
     }

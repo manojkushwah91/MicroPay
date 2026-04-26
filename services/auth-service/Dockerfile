@@ -7,20 +7,19 @@ WORKDIR /app
 WORKDIR /app/micropay-events
 COPY micropay-events/pom.xml ./pom.xml
 COPY micropay-events/src ./src
-RUN mvn clean install -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean install -DskipTests -B
 
 # Now build auth-service
 WORKDIR /app/auth-service
 COPY auth-service/pom.xml ./
 
-# Download dependencies (cached layer)
-RUN mvn dependency:go-offline -B
-
 # Copy source code
 COPY auth-service/src ./src
 
 # Build application
-RUN mvn clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests -B
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine

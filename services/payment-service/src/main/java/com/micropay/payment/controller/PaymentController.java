@@ -3,6 +3,8 @@ package com.micropay.payment.controller;
 import com.micropay.payment.dto.PaymentRequest;
 import com.micropay.payment.dto.PaymentResponse;
 import com.micropay.payment.dto.RefundRequest;
+import com.micropay.payment.dto.VerifyFundsRequest;
+import com.micropay.payment.dto.VerifyFundsResponse;
 import com.micropay.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
@@ -11,6 +13,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.util.UUID;
 
 /**
@@ -28,6 +32,21 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    /**
+     * POST /payment/verify-funds
+     * Verify if user has sufficient funds
+     */
+    @PostMapping("/verify-funds")
+    public ResponseEntity<VerifyFundsResponse> verifyFunds(@Valid @RequestBody VerifyFundsRequest request) {
+        logger.info("Verifying funds for user: {} with amount: {}", request.getUserId(), request.getAmount());
+        VerifyFundsResponse response = paymentService.verifyFunds(request.getUserId(), request.getAmount(), request.getCurrency());
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * POST /payment/{paymentId}/refund
+     * Refund a payment
+     */
     @PostMapping("/{paymentId}/refund")
     public ResponseEntity<PaymentResponse> refundPayment(@PathVariable UUID paymentId, @Valid @RequestBody RefundRequest request) {
         logger.info("Refunding payment: {} with amount: {}", paymentId, request.getAmount());

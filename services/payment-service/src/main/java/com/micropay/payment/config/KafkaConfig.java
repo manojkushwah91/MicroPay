@@ -64,7 +64,10 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        configProps.put(JsonDeserializer.TYPE_MAPPINGS, "wallet.balance.updated:com.micropay.payment.dto.WalletBalanceUpdatedEvent");
+        configProps.put(JsonDeserializer.TYPE_MAPPINGS, 
+            "wallet.balance.updated:com.micropay.payment.dto.WalletBalanceUpdatedEvent," +
+            "com.micropay.wallet.dto.WalletBalanceUpdatedEvent:com.micropay.payment.dto.WalletBalanceUpdatedEvent");
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         configProps.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         return new DefaultKafkaConsumerFactory<>(configProps);

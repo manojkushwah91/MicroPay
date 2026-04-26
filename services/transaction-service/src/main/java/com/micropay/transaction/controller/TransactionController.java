@@ -1,9 +1,12 @@
 package com.micropay.transaction.controller;
 
 import com.micropay.transaction.dto.TransactionResponse;
+import com.micropay.transaction.dto.TransferRequest;
 import com.micropay.transaction.service.TransactionService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +26,18 @@ public class TransactionController {
 
     public TransactionController(TransactionService transactionService) {
         this.transactionService = transactionService;
+    }
+
+    /**
+     * POST /transactions/transfer
+     * Initiate a money transfer
+     */
+    @PostMapping("/transactions/transfer")
+    public ResponseEntity<TransactionResponse> initiateTransfer(@Valid @RequestBody TransferRequest request) {
+        logger.info("Initiating transfer from {} to {} for amount: {}", 
+                   request.getFromUserId(), request.getToUserId(), request.getAmount());
+        TransactionResponse transaction = transactionService.initiateTransfer(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(transaction);
     }
 
     /**

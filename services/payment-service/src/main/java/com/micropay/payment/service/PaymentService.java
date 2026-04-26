@@ -13,11 +13,26 @@ import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import java.time.LocalDateTime; 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+/**
+ * DTO for wallet service response
+ */
+class WalletResponse {
+    private BigDecimal balance;
+    private String currency;
+    
+    public BigDecimal getBalance() { return balance; }
+    public void setBalance(BigDecimal balance) { this.balance = balance; }
+    public String getCurrency() { return currency; }
+    public void setCurrency(String currency) { this.currency = currency; }
+}
 
 /**
  * Service layer for payment operations
@@ -34,11 +49,14 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final WebClient webClient;
 
     public PaymentService(PaymentRepository paymentRepository, 
-                        KafkaTemplate<String, Object> kafkaTemplate) {
+                        KafkaTemplate<String, Object> kafkaTemplate,
+                        WebClient webClient) {
         this.paymentRepository = paymentRepository;
         this.kafkaTemplate = kafkaTemplate;
+        this.webClient = webClient;
     }
 
     private void publishPaymentRefundedEvent(Payment payment) {
@@ -349,5 +367,71 @@ public class PaymentService {
         response.setFailedAt(payment.getFailedAt());
         return response;
     }
+    
+    /**
+     * Verify if user has sufficient funds for a transaction
+     */
+    public VerifyFundsResponse verifyFunds(UUID userId, BigDecimal amount, String currency) {
+        logger.info("Verifying funds for user: {} amount: {} currency: {}", userId, amount, currency);
+        
+        try {
+            // Call wallet-service to get balance
+            Mono<WalletBalanceResponse> balanceMono = webClient.get()
+                    .uri("/wallet/{userId}", userId)
+                    .retrieve()
+                    .bodyToMono(WalletResponse.class)
+                    .map(walletResponse -> new WalletBalanceResponse(
+                        walletResponse.getBalance().compareTo(amount) >= 0,
+                        walletResponse.getBalance(),
+                        amount,
+                        walletResponse.getCurrency()
+                    ));
+            
+            WalletBalanceResponse balanceResponse = balanceMono.block();
+            
+            if (balanceResponse == null) {
+                logger.warn("No balance found for user: {}", userId);
+                return new VerifyFundsResponse(false, BigDecimal.ZERO, amount, currency);
+            }
+            
+            boolean sufficient = balanceResponse.isSufficient();
+            logger.info("Fund verification for user {}: sufficient={}, available={}, requested={}", 
+                       userId, sufficient, balanceResponse.getAvailableBalance(), balanceResponse.getRequestedAmount());
+            
+            return new VerifyFundsResponse(sufficient, balanceResponse.getAvailableBalance(), amount, currency);
+            
+        } catch (Exception e) {
+            logger.error("Error verifying funds for user: {}", userId, e);
+            // Default to insufficient funds on error
+            return new VerifyFundsResponse(false, BigDecimal.ZERO, amount, currency);
+        }
+    }
+    
+    /**
+     * DTO for wallet balance response
+     */
+    public static class WalletBalanceResponse {
+        private boolean sufficient;
+        private BigDecimal availableBalance;
+        private BigDecimal requestedAmount;
+        private String currency;
+        
+        public WalletBalanceResponse() {}
+        
+        public WalletBalanceResponse(boolean sufficient, BigDecimal availableBalance, BigDecimal requestedAmount, String currency) {
+            this.sufficient = sufficient;
+            this.availableBalance = availableBalance;
+            this.requestedAmount = requestedAmount;
+            this.currency = currency;
+        }
+        
+        public boolean isSufficient() { return sufficient; }
+        public void setSufficient(boolean sufficient) { this.sufficient = sufficient; }
+        public BigDecimal getAvailableBalance() { return availableBalance; }
+        public void setAvailableBalance(BigDecimal availableBalance) { this.availableBalance = availableBalance; }
+        public BigDecimal getRequestedAmount() { return requestedAmount; }
+        public void setRequestedAmount(BigDecimal requestedAmount) { this.requestedAmount = requestedAmount; }
+        public String getCurrency() { return currency; }
+        public void setCurrency(String currency) { this.currency = currency; }
+    }
 }
-

@@ -5,13 +5,17 @@ import com.micropay.auth.dto.AuthResponse;
 import com.micropay.auth.dto.LoginRequest;
 import com.micropay.auth.dto.RegisterRequest;
 import com.micropay.auth.service.AuthService;
+import com.micropay.auth.service.JwtService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -20,7 +24,9 @@ import java.util.UUID;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(AuthController.class)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
+@AutoConfigureMockMvc(addFilters = false)
+@Import(com.micropay.auth.TestConfig.class)
 @ActiveProfiles("test")
 class AuthControllerTest {
 
@@ -30,8 +36,17 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @MockBean
+    @Autowired
     private AuthService authService;
+    
+    @Autowired
+    private JwtService jwtService;
+    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     @Test
     @DisplayName("POST /auth/register returns 201 CREATED")
@@ -48,7 +63,7 @@ class AuthControllerTest {
         Mockito.when(authService.register(Mockito.any(RegisterRequest.class)))
                 .thenReturn(resp);
 
-        mockMvc.perform(post("/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated());
@@ -67,7 +82,7 @@ class AuthControllerTest {
         Mockito.when(authService.login(Mockito.any(LoginRequest.class)))
                 .thenReturn(resp);
 
-        mockMvc.perform(post("/auth/login")
+        mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk());

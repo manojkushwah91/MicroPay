@@ -1,8 +1,8 @@
-server:
-  port: ${SERVER_PORT:8083}
-
 spring:
   application:
     name: wallet-service
   config:
-    import: "optional:configserver:http://config-server:8888"
+    import: optional:configserver:http://${SPRING_SECURITY_USER_NAME:-admin}:${SPRING_SECURITY_USER_PASSWORD:-micropay_secure}@config-server:8888
+
+server:
+  port: ${SERVER_PORT:8083}

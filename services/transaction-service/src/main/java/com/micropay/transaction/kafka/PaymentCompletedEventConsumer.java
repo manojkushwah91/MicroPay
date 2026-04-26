@@ -1,10 +1,13 @@
 package com.micropay.transaction.kafka;
 
 import com.micropay.transaction.dto.PaymentCompletedEvent;
+import com.micropay.transaction.dto.TransactionRecordedEvent;
 import com.micropay.transaction.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -20,9 +23,12 @@ public class PaymentCompletedEventConsumer {
 
     private static final Logger logger = LoggerFactory.getLogger(PaymentCompletedEventConsumer.class);
 
+    private final KafkaTemplate<String, TransactionRecordedEvent> kafkaTemplate;
     private final TransactionService transactionService;
 
-    public PaymentCompletedEventConsumer(TransactionService transactionService) {
+    public PaymentCompletedEventConsumer(@Qualifier("transactionRecordedKafkaTemplate") KafkaTemplate<String, TransactionRecordedEvent> kafkaTemplate,
+                                        TransactionService transactionService) {
+        this.kafkaTemplate = kafkaTemplate;
         this.transactionService = transactionService;
     }
 

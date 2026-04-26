@@ -5,7 +5,7 @@ import { walletService } from '../services/walletService';
 import PaymentModal from '../components/PaymentModal';
 import WalletCard from '../components/WalletCard';
 import Skeleton from '../components/Skeleton';
-import type { Wallet, ApiError } from '../types';
+import type { Wallet } from '../types';
 
 export default function Payments() {
   const navigate = useNavigate();
@@ -60,10 +60,10 @@ export default function Payments() {
       setCreditAmount(0);
       await loadWallet(userId);
     } catch (err: any) {
-      const apiError = err.response?.data as ApiError;
+      const userFriendlyMessage = err.userFriendlyMessage || err.response?.data?.userFriendlyMessage || 'Credit operation failed. Please try again.';
       setMessage({
         type: 'error',
-        text: apiError?.message || 'Credit operation failed. Please try again.',
+        text: userFriendlyMessage,
       });
     } finally {
       setIsLoading(false);
@@ -89,10 +89,10 @@ export default function Payments() {
       setDebitAmount(0);
       await loadWallet(userId);
     } catch (err: any) {
-      const apiError = err.response?.data as ApiError;
+      const userFriendlyMessage = err.userFriendlyMessage || err.response?.data?.userFriendlyMessage || 'Debit operation failed. Please try again.';
       setMessage({
         type: 'error',
-        text: apiError?.message || 'Debit operation failed. Please try again.',
+        text: userFriendlyMessage,
       });
     } finally {
       setIsLoading(false);
@@ -259,23 +259,6 @@ export default function Payments() {
               >
                 Send Money Now
               </button>
-            </div>
-
-            <div className="mt-6 pt-6 border-t border-fintech-700/30">
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-primary-400">2.5s</p>
-                  <p className="text-xs text-fintech-500">Avg Transfer</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-success-400">99.9%</p>
-                  <p className="text-xs text-fintech-500">Success Rate</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-warning-400">$0.25</p>
-                  <p className="text-xs text-fintech-500">Min Transfer</p>
-                </div>
-              </div>
             </div>
           </div>
         </div>

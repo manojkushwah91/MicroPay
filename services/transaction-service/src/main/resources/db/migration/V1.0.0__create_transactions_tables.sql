@@ -38,7 +38,7 @@ ALTER TABLE transactions ADD CONSTRAINT chk_transaction_status
 ALTER TABLE transaction_entries ADD CONSTRAINT chk_entry_type 
     CHECK (entry_type IN ('DEBIT', 'CREDIT'));
 ALTER TABLE transaction_entries ADD CONSTRAINT chk_amount_positive 
-    CHECK (amount > 0);
+    CHECK (amount >= 0);
 
 -- Add comments to tables
 COMMENT ON TABLE transactions IS 'Stores transaction records with double-entry bookkeeping';

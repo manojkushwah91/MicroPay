@@ -3,24 +3,23 @@ FROM maven:3.9-eclipse-temurin-17-alpine AS builder
 
 WORKDIR /app
 
-# First, build micropay-events if needed (skip if not)
-# WORKDIR /app/micropay-events
-# COPY micropay-events/pom.xml ./pom.xml
-# COPY micropay-events/src ./src
-# RUN mvn clean install -DskipTests -B
+# First, build and install micropay-events dependency
+WORKDIR /app/micropay-events
+COPY micropay-events/pom.xml ./pom.xml
+COPY micropay-events/src ./src
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean install -DskipTests -B
 
 # Now build user-service
 WORKDIR /app/user-service
 COPY user-service/pom.xml ./
 
-# Download dependencies (cached layer)
-RUN mvn dependency:go-offline -B
-
 # Copy source code
 COPY user-service/src ./src
 
 # Build application
-RUN mvn clean package -DskipTests -B
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn clean package -DskipTests -B
 
 # Runtime stage
 FROM eclipse-temurin:17-jre-alpine

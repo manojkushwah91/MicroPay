@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "blocked_tokens", indexes = {
-    @Index(name = "idx_expiry_date", columnList = "expiryDate")
+    @Index(name = "idx_blocked_token_expiry", columnList = "expiryDate")
 })
 public class BlockedToken {
 

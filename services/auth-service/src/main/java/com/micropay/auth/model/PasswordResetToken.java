@@ -6,7 +6,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "password_reset_tokens", indexes = {
-    @Index(name = "idx_expiry_date", columnList = "expiryDate")
+    @Index(name = "idx_pwd_reset_expiry", columnList = "expiryDate")
 })
 public class PasswordResetToken {
 
