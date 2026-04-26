@@ -31,9 +31,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2-
 
       - name: Run tests
-        run: |
-          chmod +x mvnw
-          ./mvnw -B test
+        # FIXED: Using standard 'mvn' instead of './mvnw'
+        run: mvn -B test
 
   docker-build:
     runs-on: ubuntu-latest
