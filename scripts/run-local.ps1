@@ -22,5 +22,5 @@ Set-Location $dockerDir
 Write-Host "[INFO] Starting stack from $dockerDir ..." -ForegroundColor Green
 Invoke-Expression "$compose --env-file .env up -d --build"
 if ($LASTEXITCODE -ne 0) { exit 1 }
-Write-Host "[INFO] Stack started. Frontend: http://localhost:3000  API Gateway: http://localhost:8080" -ForegroundColor Green
+Write-Host "[INFO] Stack started. Frontend: http://localhost  API Gateway: http://localhost:8080" -ForegroundColor Green
 Write-Host "[INFO] Run .\scripts\verify-stack.ps1 after ~2 min to verify." -ForegroundColor Cyan

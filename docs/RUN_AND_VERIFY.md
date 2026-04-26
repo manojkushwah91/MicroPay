@@ -3,7 +3,6 @@
 ## Prerequisites
 
 - Docker Desktop (with Docker Compose v2 or standalone docker-compose)
-- For AWS: AWS CLI, ECR repository, EC2 or EKS
 
 ## Local run (full stack with Config Server)
 
@@ -30,17 +29,17 @@
    ```
 
 4. Open:
-   - Frontend: http://localhost:3000
-   - API Gateway: http://localhost:8080
+   - Frontend (via Nginx reverse proxy): http://localhost
+   - API Gateway (direct): http://localhost:8080
    - Eureka: http://localhost:8761
-
-## Production-style run (EC2/AWS-like)
-
-```powershell
-.\scripts\start-stack.ps1 -PostgresPassword "YourSecurePassword" -JwtSecret "YourJwtSecret"
-```
-
-Uses `docker-compose.prod.yml` (no Config Server; services use local config).
+   - Swagger UI:
+     - API Gateway: http://localhost:8080/swagger-ui.html
+     - Auth: http://localhost:8081/swagger-ui.html
+     - User: http://localhost:8082/swagger-ui.html
+     - Wallet: http://localhost:8083/swagger-ui.html
+     - Payment: http://localhost:8084/swagger-ui.html
+     - Transaction: http://localhost:8085/swagger-ui.html
+     - Notification: http://localhost:8086/swagger-ui.html
 
 ## E2E tests (Node)
 
@@ -50,12 +49,6 @@ After stack is up:
 npm install axios
 node tests/e2e.js
 ```
-
-## AWS deployment
-
-1. Set GitHub secrets: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `EC2_HOST`, `EC2_USER`, `EC2_SSH_PRIVATE_KEY`, `POSTGRES_PASSWORD`, `JWT_SECRET`.
-2. Push to `main`; workflow builds images, pushes to ECR, deploys to EC2.
-3. Or run Terraform for EC2, then deploy with the same compose/prod flow.
 
 ## Troubleshooting
 

@@ -2,7 +2,7 @@ spring:
   application:
     name: notification-service
   config:
-    import: optional:configserver:http://${SPRING_SECURITY_USER_NAME:-admin}:${SPRING_SECURITY_USER_PASSWORD:-micropay_secure}@config-server:8888
+    import: optional:configserver:http://${CONFIG_SERVER_USER:-admin}:${CONFIG_SERVER_PASSWORD:-micropay_secure}@config-server:8888
 
 server:
   port: ${SERVER_PORT:8086}

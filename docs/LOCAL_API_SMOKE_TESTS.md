@@ -1,6 +1,6 @@
 ## MicroPay Local API Smoke Tests
 
-Assumes `docker compose -f infrastructure/docker/docker-compose.prod.yml --env-file .env up -d --build` is running and Nginx is listening on `http://localhost`.
+Assumes `docker compose -f infrastructure/docker/docker-compose.yml --env-file .env up -d --build --profile frontend` is running and Nginx is listening on `http://localhost`.
 
 ### Auth
 

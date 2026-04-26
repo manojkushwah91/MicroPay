@@ -1,14 +1,17 @@
 # MicroPay Stack Startup Scripts
 
-This directory contains scripts to start the entire MicroPay application stack with a single command.
+This directory contains helper scripts for local development.
 
 ## Available Scripts
 
-### 1. start-stack.sh (Linux/macOS)
-Bash script for Linux and macOS systems.
+### 1. run-local.ps1 (Windows PowerShell)
+Starts the local stack using `infrastructure/docker/docker-compose.yml`.
 
-### 2. start-stack.ps1 (Windows PowerShell)
-PowerShell script for Windows systems.
+### 2. verify-stack.ps1 (Windows PowerShell)
+Performs a basic end-to-end verification via health checks and Gateway routes.
+
+### 3. bootstrap-mvnw.(ps1|sh)
+Ensures the Maven wrapper is executable / usable across platforms.
 
 ## Prerequisites
 
@@ -20,44 +23,8 @@ PowerShell script for Windows systems.
 ### Windows (PowerShell)
 
 ```powershell
-# Navigate to the scripts directory
-cd scripts
-
-# Run the startup script with required parameters
-.\start-stack.ps1 -PostgresPassword "your-password" -JwtSecret "your-jwt-secret"
-
-# Optional parameters (with defaults shown)
-.\start-stack.ps1 -PostgresPassword "your-password" -JwtSecret "your-jwt-secret" `
-    -PostgresUser "postgres" `
-    -PostgresDb "postgres" `
-    -SpringProfilesActive "prod" `
-    -KafkaBroker "kafka:29092" `
-    -JwtExpiration "86400000" `
-    -FrontendUrl "http://127.0.0.1" `
-    -ViteApiBaseUrl "/api" `
-    -EcrRegistry "local" `
-    -ImageTag "latest" `
-    -KafkaAdvertisedHost "127.0.0.1"
-```
-
-### Linux/macOS (Bash)
-
-```bash
-# Navigate to the scripts directory
-cd scripts
-
-# Export required environment variables
-export POSTGRES_PASSWORD="your-password"
-export JWT_SECRET="your-jwt-secret"
-
-# Make the script executable
-chmod +x start-stack.sh
-
-# Run the startup script
-./start-stack.sh
-
-# Or with environment variables inline
-POSTGRES_PASSWORD="your-password" JWT_SECRET="your-jwt-secret" ./start-stack.sh
+.\scripts\run-local.ps1
+.\scripts\verify-stack.ps1
 ```
 
 ## Required Environment Variables
@@ -72,13 +39,11 @@ POSTGRES_PASSWORD="your-password" JWT_SECRET="your-jwt-secret" ./start-stack.sh
 | `POSTGRES_USER` | postgres | PostgreSQL username |
 | `POSTGRES_DB` | postgres | Default database name |
 | `SPRING_PROFILES_ACTIVE` | prod | Spring profile to use |
-| `KAFKA_BROKER` | kafka:29092 | Kafka bootstrap servers |
+| `SPRING_KAFKA_BOOTSTRAP_SERVERS` | kafka:29092 | Kafka bootstrap servers |
 | `JWT_EXPIRATION` | 86400000 | JWT token expiration time (ms) |
-| `FRONTEND_URL` | http://127.0.0.1 | Frontend application URL |
-| `VITE_API_BASE_URL` | /api | API base URL for frontend |
-| `ECR_REGISTRY` | local | Docker registry for images |
-| `IMAGE_TAG` | latest | Docker image tag |
-| `KAFKA_ADVERTISED_HOST` | 127.0.0.1 | Kafka advertised host |
+| `FRONTEND_URL` | http://localhost | Frontend URL used by Gateway CORS |
+| `VITE_API_BASE_URL` | /api | API base URL for frontend build |
+| `KAFKA_ADVERTISED_HOST` | localhost | Kafka advertised host for host tools |
 
 ## Service URLs
 
@@ -99,26 +64,26 @@ Once the stack is started, you can access the services at:
 
 ### Check Service Status
 ```bash
-docker-compose -f infrastructure/docker/docker-compose.prod.yml ps
+docker compose -f infrastructure/docker/docker-compose.yml ps
 ```
 
 ### View Logs
 ```bash
 # View all logs
-docker-compose -f infrastructure/docker/docker-compose.prod.yml logs -f
+docker compose -f infrastructure/docker/docker-compose.yml logs -f
 
 # View specific service logs
-docker-compose -f infrastructure/docker/docker-compose.prod.yml logs -f [service-name]
+docker compose -f infrastructure/docker/docker-compose.yml logs -f [service-name]
 ```
 
 ### Stop the Stack
 ```bash
-docker-compose -f infrastructure/docker/docker-compose.prod.yml down
+docker compose -f infrastructure/docker/docker-compose.yml down
 ```
 
 ### Restart Services
 ```bash
-docker-compose -f infrastructure/docker/docker-compose.prod.yml restart [service-name]
+docker compose -f infrastructure/docker/docker-compose.yml restart [service-name]
 ```
 
 ## Health Checks
@@ -162,10 +127,6 @@ The scripts wait up to 5 minutes for each service to become healthy. If services
 1. Check the service logs for startup issues
 2. Increase the timeout values in the scripts
 3. Run the health checks manually after startup
-
-## Development vs Production
-
-These scripts use the `docker-compose.prod.yml` file which is configured for production-like environments. For development, you might want to use `docker-compose.yml` instead.
 
 ## Next Steps
 

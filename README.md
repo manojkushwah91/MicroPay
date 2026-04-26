@@ -4,13 +4,12 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-brightgreen.svg)
 ![Kafka](https://img.shields.io/badge/Event_Driven-Kafka-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-Containerized-blue.svg)
-![AWS](https://img.shields.io/badge/AWS-Free_Tier-yellow.svg)
 
 ---
 
 ## 🚀 Overview
 
-**MicroPay** is a backend-first, cloud-native digital wallet and payment processing system built using **microservices architecture** and **event-driven design**.
+**MicroPay** is a local-first digital wallet and payment processing system built using **microservices architecture** and **event-driven design**.
 
 It simulates real-world fintech systems by focusing on:
 
@@ -124,8 +123,7 @@ flowchart LR
 ### DevOps
 
 * Docker & Docker Compose
-* GitHub Actions (CI/CD)
-* AWS (EC2, S3, CloudFront, ECR)
+* GitHub Actions (CI)
 
 ---
 
@@ -168,14 +166,15 @@ cp .env.example .env
 
 ```bash
 cd infrastructure/docker
-docker compose -f docker-compose.prod.yml --env-file ../../.env up -d --build
+docker compose --env-file ../../.env up -d --build
 ```
 
 ### 4. Access services
 
-* Frontend: [http://localhost](http://localhost)
-* API Gateway: [http://localhost/api](http://localhost/api)
-* Health Check: [http://localhost/api/actuator/health](http://localhost/api/actuator/health)
+- Frontend (via Nginx reverse proxy): [http://localhost](http://localhost)
+- API Gateway (direct): [http://localhost:8080](http://localhost:8080)
+- Eureka: [http://localhost:8761](http://localhost:8761)
+- Health Check (gateway): [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
 
 ---
 
@@ -194,13 +193,15 @@ All services expose:
 
 ## 📄 API Documentation
 
-Swagger UI available per service:
+Swagger UI available per service (and Gateway):
 
-* Auth: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
-* Wallet: [http://localhost:8083/swagger-ui.html](http://localhost:8083/swagger-ui.html)
-* Payment: [http://localhost:8084/swagger-ui.html](http://localhost:8084/swagger-ui.html)
-* Transaction: [http://localhost:8085/swagger-ui.html](http://localhost:8085/swagger-ui.html)
-* Notification: [http://localhost:8086/swagger-ui.html](http://localhost:8086/swagger-ui.html)
+- API Gateway: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+- Auth: [http://localhost:8081/swagger-ui.html](http://localhost:8081/swagger-ui.html)
+- User: [http://localhost:8082/swagger-ui.html](http://localhost:8082/swagger-ui.html)
+- Wallet: [http://localhost:8083/swagger-ui.html](http://localhost:8083/swagger-ui.html)
+- Payment: [http://localhost:8084/swagger-ui.html](http://localhost:8084/swagger-ui.html)
+- Transaction: [http://localhost:8085/swagger-ui.html](http://localhost:8085/swagger-ui.html)
+- Notification: [http://localhost:8086/swagger-ui.html](http://localhost:8086/swagger-ui.html)
 
 ---
 
@@ -216,25 +217,6 @@ tests/smoke/api-smoke.test.http
 
 ```bash
 k6 run tests/load/k6-smoke.js
-```
-
----
-
-## ☁️ AWS Deployment (Free Tier)
-
-### Infrastructure
-
-* EC2 (t2.micro)
-* Docker Compose deployment
-* S3 + CloudFront (frontend)
-* ECR (container registry)
-
-### Deploy using Terraform
-
-```bash
-cd infrastructure/terraform
-terraform init
-terraform apply
 ```
 
 ---
@@ -261,8 +243,7 @@ terraform apply
 * Microservices communication patterns
 * Event-driven architecture
 * Distributed system design
-* CI/CD pipelines
-* Cloud deployment (AWS Free Tier)
+* CI pipelines
 
 ---
 
@@ -271,7 +252,7 @@ terraform apply
 * Add Redis caching
 * Implement circuit breakers (Resilience4j)
 * Add distributed tracing (Zipkin/Jaeger)
-* Kubernetes deployment
+* Improve local developer ergonomics (profiles, faster boot)
 
 ---
 
